@@ -21,11 +21,11 @@ import android.content.Context
 import android.content.DialogInterface
 import android.database.Cursor
 import android.graphics.drawable.Drawable
-import android.support.annotation.ArrayRes
-import android.support.annotation.DrawableRes
-import android.support.annotation.StringRes
-import android.support.v4.app.Fragment
-import android.support.v7.app.AlertDialog
+import androidx.annotation.ArrayRes
+import androidx.annotation.DrawableRes
+import androidx.annotation.StringRes
+import androidx.fragment.app.Fragment
+import androidx.appcompat.app.AlertDialog
 import android.view.KeyEvent
 import android.view.View
 import android.widget.ListAdapter
@@ -35,7 +35,7 @@ fun Fragment.dialog(
         title: String? = null,
         message: String? = null,
         init: (KAlertDialogBuilder.() -> Unit)? = null
-) = activity.dialog(title, message, init)
+) = activity?.dialog(title, message, init)
 
 fun Context.dialog(
         title: String? = null,
@@ -51,7 +51,7 @@ fun Fragment.dialog(
         @StringRes message: Int,
         @StringRes title: Int? = null,
         init: (KAlertDialogBuilder.() -> Unit)? = null
-) = activity.dialog(message, title, init)
+) = activity?.dialog(message, title, init)
 
 fun Context.dialog(
         @StringRes message: Int,
@@ -63,7 +63,7 @@ fun Context.dialog(
     if (init != null) init()
 }
 
-fun Fragment.dialog(init: KAlertDialogBuilder.() -> Unit): KAlertDialogBuilder = activity.dialog(init)
+fun Fragment.dialog(init: KAlertDialogBuilder.() -> Unit): KAlertDialogBuilder = activity!!.dialog(init)
 
 fun Context.dialog(init: KAlertDialogBuilder.() -> Unit) = KAlertDialogBuilder(this).apply { init() }
 
@@ -71,7 +71,7 @@ fun Fragment.progressDialog(
         @StringRes message: Int? = null,
         @StringRes title: Int? = null,
         init: (ProgressDialog.() -> Unit)? = null
-) = activity.progressDialog(message, title, init)
+) = activity?.progressDialog(message, title, init)
 
 fun Context.progressDialog(
         @StringRes message: Int? = null,
@@ -83,7 +83,7 @@ fun Fragment.indeterminateProgressDialog(
         @StringRes message: Int? = null,
         @StringRes title: Int? = null,
         init: (ProgressDialog.() -> Unit)? = null
-) = activity.progressDialog(message, title, init)
+) = activity?.progressDialog(message, title, init)
 
 fun Context.indeterminateProgressDialog(
         @StringRes message: Int? = null,
@@ -95,7 +95,7 @@ fun Fragment.progressDialog(
         message: String? = null,
         title: String? = null,
         init: (ProgressDialog.() -> Unit)? = null
-) = activity.progressDialog(message, title, init)
+) = activity?.progressDialog(message, title, init)
 
 fun Context.progressDialog(
         message: String? = null,
@@ -107,7 +107,7 @@ fun Fragment.indeterminateProgressDialog(
         message: String? = null,
         title: String? = null,
         init: (ProgressDialog.() -> Unit)? = null
-) = activity.indeterminateProgressDialog(message, title, init)
+) = activity?.indeterminateProgressDialog(message, title, init)
 
 fun Context.indeterminateProgressDialog(
         message: String? = null,
@@ -133,7 +133,7 @@ fun Fragment.sheet(
         title: CharSequence? = null,
         items: List<CharSequence>,
         onClick: (Int) -> Unit
-) = activity.sheet(title, items, onClick)
+) = activity?.sheet(title, items, onClick)
 
 fun Context.sheet(
         title: CharSequence? = null,

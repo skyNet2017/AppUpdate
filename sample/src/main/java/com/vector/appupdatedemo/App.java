@@ -2,6 +2,8 @@ package com.vector.appupdatedemo;
 
 import android.app.Application;
 
+import androidx.multidex.MultiDexApplication;
+
 import com.lzy.okgo.OkGo;
 import com.zhy.http.okhttp.OkHttpUtils;
 
@@ -10,7 +12,7 @@ import com.zhy.http.okhttp.OkHttpUtils;
  * on 2017/7/17 0017.
  */
 
-public class App extends Application {
+public class App extends MultiDexApplication {
     @Override
     public void onCreate() {
         super.onCreate();

@@ -2,7 +2,7 @@ package com.vector.appupdatedemo.ui
 
 import android.os.Bundle
 import android.os.Environment
-import android.support.v7.app.AppCompatActivity
+import androidx.appcompat.app.AppCompatActivity
 import com.vector.appupdatedemo.R
 import com.vector.appupdatedemo.ext.cancelProgressDialog
 import com.vector.appupdatedemo.ext.dialog
