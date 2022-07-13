@@ -1,0 +1,49 @@
+buildscript{
+
+     repositories {
+        maven {//google()
+             url  'https://dl.google.com/dl/android/maven2/'
+        }
+        maven {//jcenter()
+             url  'https://jcenter.bintray.com/'
+        }
+        maven {//mavenCentral()
+             url  'https://repo.maven.apache.org/maven2/'
+        }
+        maven {
+             url  'https://jitpack.io'
+        }
+        maven {
+             url  'https://maven.google.com/'
+        }
+}
+
+//list all plugin classPath:
+dependencies {
+     classpath "com.android.tools.build:gradle:4.1.0"
+     classpath "com.hujiang.aspectjx:gradle-android-plugin-aspectjx:2.0.10"
+     classpath "com.novoda:bintray-release:0.4.0"
+     classpath "io.github.didi.dokit:dokitx-plugin:3.5.0.1"
+     classpath "org.jetbrains.kotlin:kotlin-gradle-plugin:1.6.21"
+  }
+}
+
+
+//当前工程应用的插件信息:
+// [class:class org.gradle.api.plugins.HelpTasksPlugin]
+// [class:class org.gradle.buildinit.plugins.BuildInitPlugin]
+// [class:class org.gradle.buildinit.plugins.WrapperPlugin]
+// [class:class com.android.build.gradle.internal.plugins.VersionCheckPlugin]
+// [class:class com.android.build.gradle.api.AndroidBasePlugin]
+// [class:class org.gradle.language.base.plugins.LifecycleBasePlugin]
+// [class:class org.gradle.api.plugins.BasePlugin]
+// [class:class org.gradle.api.plugins.JvmEcosystemPlugin]
+// [class:class org.gradle.api.plugins.ReportingBasePlugin]
+// [class:class org.gradle.api.plugins.JavaBasePlugin$Inject, javaToolchainQueryService:org.gradle.jvm.toolchain.internal.JavaToolchainQueryService@10a7dc90, taskThatOwnsThisObject:null, modelIdentityDisplayName:null]
+// [extension:extension 'android', projectType:0, moduleLoader:com.android.build.gradle.internal.plugins.LintModuleLoader@13737fe6, class:class com.android.build.gradle.internal.plugins.AppPlugin, packagePublished:false, analyticsPluginType:APPLICATION, extensionClass:class com.android.build.gradle.internal.dsl.BaseAppModuleExtension, variantInputModel:com.android.build.gradle.internal.variant.LegacyVariantInputManager@1718db9e, variantManager:com.android.build.gradle.internal.VariantManager@76f2f583]
+// [extension:extension 'android', class:class com.android.build.gradle.AppPlugin]
+// [nativeCompilerPluginArtifact:null, pluginArtifact:org.jetbrains.kotlin.gradle.plugin.JetBrainsSubpluginArtifact@593fdcad, class:class org.jetbrains.kotlin.gradle.internal.AndroidSubplugin, compilerPluginId:org.jetbrains.kotlin.android, pluginArtifactForNative:null]
+// [class:class org.jetbrains.kotlin.gradle.internal.AndroidExtensionsSubpluginIndicator]
+// [class:class org.jetbrains.kotlin.gradle.plugin.KotlinAndroidPluginWrapper, kotlinPluginVersion:1.6.21, registry:org.gradle.tooling.provider.model.internal.DefaultToolingModelBuilderRegistry@17ea0efb, projectExtensionClass:class org.jetbrains.kotlin.gradle.dsl.KotlinAndroidProjectExtension]
+// [class:class com.dorongold.gradle.tasktree.TaskTreePlugin]
+// [class:class com.hujiang.gradle.plugin.android.aspectjx.AJXPlugin]
