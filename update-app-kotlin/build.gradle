@@ -2,12 +2,11 @@ apply plugin: 'com.android.library'
 apply plugin: 'kotlin-android'
 //apply plugin: 'com.novoda.bintray-release'//添加
 android {
-    compileSdkVersion 26
-    buildToolsVersion "26.0.0"
+    compileSdkVersion 32
 
     defaultConfig {
-        minSdkVersion 14
-        targetSdkVersion  26
+        minSdkVersion 19
+        targetSdkVersion  32
         versionCode 1
         versionName "1.0"
 
@@ -33,7 +32,7 @@ dependencies {
     })
     testCompile 'junit:junit:4.12'
 
-    compile "org.jetbrains.kotlin:kotlin-stdlib-jre7:$kotlin_version"
+    compile "org.jetbrains.kotlin:kotlin-stdlib:$kotlin_version"
 
     compile 'com.qianwen:update-app:'+rootProject.ext.update_app_version
 //    compile project(':update-app')
