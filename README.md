@@ -1,6 +1,30 @@
 
 ## Android 版本更新
 
+# 服务端
+
+直接使用github的文件存储功能.
+
+https://raw.githubusercontent.com/WVector/AppUpdateDemo/master/json/json.txt
+
+内容为:
+
+```json
+{
+  "update": "Yes",
+  "new_version": "0.8.3",
+  "apk_file_url": "https://raw.githubusercontent.com/WVector/AppUpdateDemo/master/apk/sample-debug.apk",
+  "update_log": "1，添加删除信用卡接口。\r\n2，添加vip认证。\r\n3，区分自定义消费，一个小时不限制。\r\n4，添加放弃任务接口，小时内不生成。\r\n5，消费任务手动生成。",
+  "target_size": "5M",
+  "new_md5":"b97bea014531123f94c3ba7b7afbaad2",
+  "constraint": false
+}
+```
+
+apk也直接放github上,国内可以通过jsdeliver来访问
+
+
+
 ## 目录
 
 * [功能介绍](#功能介绍)
@@ -24,6 +48,10 @@
 - [x] 支持自定义对话框（可以监听下载进度）
 - [x] 支持静默下载（可以设置wifi状态下）
 - [x] 支持android7.0
+- [ ] **以下是fork后的修改**
+- [x] **文案遵循Android strings.xml配置方式**
+- [x] **解除对存储权限的依赖**
+- [x] **适配Android12**
 
 ## 效果图与示例 apk
 
@@ -37,7 +65,7 @@
 
 <img src="https://raw.githubusercontent.com/WVector/AppUpdateDemo/master/image/example_06.png" width="1000">
 
-	
+
 [点击下载 Demo.apk](https://raw.githubusercontent.com/WVector/AppUpdateDemo/master/apk/sample-debug.apk) 或扫描下面的二维码安装
 
 ![Demo apk文件二维](https://raw.githubusercontent.com/WVector/AppUpdateDemo/master/image/1498810770.png)
@@ -119,11 +147,11 @@ v3.5.0
 v3.4.8 
 
 	1,修复bug
-	
+
 v3.4.7 
 
 	1,优化 APP 安装的问题
-	
+
 v3.4.6 
 
 	1,优化 APP 安装的问题
@@ -133,11 +161,11 @@ v3.4.5
 	1，增加全局异常捕获方法
 	
 	                .handleException(new ExceptionHandler() 						{
-                    @Override
-                    public void onException(Exception e) {
-
-                    }
-                })
+	                @Override
+	                public void onException(Exception e) {
+	
+	                }
+	            })
 
 v3.4.4
 
@@ -148,7 +176,7 @@ v3.4.3
 
 	1，修复bug
 [bug](https://github.com/WVector/AppUpdate/pull/67)
-   
+
 v3.4.2
 
 	1,修复bug
@@ -230,15 +258,15 @@ V3.3.0
 ## License
 
    	Copyright 2017 千匍
-
-    Licensed under the Apache License, Version 2.0 (the "License");
-    you may not use this file except in compliance with the License.
-    You may obtain a copy of the License at
-
-       http://www.apache.org/licenses/LICENSE-2.0
-
-    Unless required by applicable law or agreed to in writing, software
-    distributed under the License is distributed on an "AS IS" BASIS,
-    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-    See the License for the specific language governing permissions and
-    limitations under the License.
+   	
+   	Licensed under the Apache License, Version 2.0 (the "License");
+   	you may not use this file except in compliance with the License.
+   	You may obtain a copy of the License at
+   	
+   	   http://www.apache.org/licenses/LICENSE-2.0
+   	
+   	Unless required by applicable law or agreed to in writing, software
+   	distributed under the License is distributed on an "AS IS" BASIS,
+   	WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+   	See the License for the specific language governing permissions and
+   	limitations under the License.
