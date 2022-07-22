@@ -9,6 +9,7 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.ServiceConnection;
 import android.os.Binder;
+import android.os.Build;
 import android.os.IBinder;
 import androidx.annotation.Nullable;
 import androidx.core.app.NotificationCompat;
@@ -107,8 +108,8 @@ public class DownloadService extends Service {
 
 
         mBuilder = new NotificationCompat.Builder(this, CHANNEL_ID);
-        mBuilder.setContentTitle("开始下载")
-                .setContentText("正在连接服务器")
+        mBuilder.setContentTitle(getString(R.string.update_download_dialog_tile))
+                .setContentText(getString(R.string.update_download_dialog_connecting))
                 .setSmallIcon(R.mipmap.lib_update_app_update_icon)
                 .setLargeIcon(AppUpdateUtils.drawableToBitmap(AppUpdateUtils.getAppIcon(DownloadService.this)))
                 .setOngoing(true)
@@ -126,7 +127,7 @@ public class DownloadService extends Service {
 
         String apkUrl = updateApp.getApkFileUrl();
         if (TextUtils.isEmpty(apkUrl)) {
-            String contentText = "新版本下载路径错误";
+            String contentText = getString(R.string.update_download_dialog_path_error);
             stop(contentText);
             return;
         }
@@ -257,7 +258,7 @@ public class DownloadService extends Service {
                 }
 
                 if (mBuilder != null) {
-                    mBuilder.setContentTitle("正在下载：" + AppUpdateUtils.getAppName(DownloadService.this))
+                    mBuilder.setContentTitle(getString(R.string.update_downloading) + AppUpdateUtils.getAppName(DownloadService.this))
                             .setContentText(rate + "%")
                             .setProgress(100, rate, false)
                             .setWhen(System.currentTimeMillis());
@@ -275,7 +276,7 @@ public class DownloadService extends Service {
 
         @Override
         public void onError(String error) {
-            Toast.makeText(DownloadService.this, "更新新版本出错，" + error, Toast.LENGTH_SHORT).show();
+            Toast.makeText(DownloadService.this, getString(R.string.update_download_error) + error, Toast.LENGTH_SHORT).show();
             //App前台运行
             if (mCallBack != null) {
                 mCallBack.onError(error);
@@ -306,10 +307,10 @@ public class DownloadService extends Service {
                     if (mCallBack != null) {
                         boolean temp = mCallBack.onInstallAppAndAppOnForeground(file);
                         if (!temp) {
-                            AppUpdateUtils.installApp(DownloadService.this, file);
+                            AppUpdateUtils.checkAndInstallApk( file);
                         }
                     } else {
-                        AppUpdateUtils.installApp(DownloadService.this, file);
+                        AppUpdateUtils.checkAndInstallApk( file);
                     }
 
 
@@ -317,10 +318,16 @@ public class DownloadService extends Service {
                     //App后台运行
                     //更新参数,注意flags要使用FLAG_UPDATE_CURRENT
                     Intent installAppIntent = AppUpdateUtils.getInstallAppIntent(DownloadService.this, file);
-                    PendingIntent contentIntent = PendingIntent.getActivity(DownloadService.this, 0, installAppIntent, PendingIntent.FLAG_UPDATE_CURRENT);
+                    PendingIntent contentIntent = null;
+                    if(Build.VERSION.SDK_INT >= Build.VERSION_CODES.S){
+                        contentIntent = PendingIntent.getActivity(DownloadService.this, 0, installAppIntent,
+                                PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_MUTABLE);
+                    }else {
+                        contentIntent = PendingIntent.getActivity(DownloadService.this, 0, installAppIntent, PendingIntent.FLAG_UPDATE_CURRENT);
+                    }
                     mBuilder.setContentIntent(contentIntent)
                             .setContentTitle(AppUpdateUtils.getAppName(DownloadService.this))
-                            .setContentText("下载完成，请点击安装")
+                            .setContentText(getString(R.string.download_success_click_to_install))
                             .setProgress(0, 0, false)
                             //                        .setAutoCancel(true)
                             .setDefaults((Notification.DEFAULT_ALL));

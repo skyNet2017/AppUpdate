@@ -17,12 +17,23 @@ import android.net.NetworkInfo;
 import android.net.Uri;
 import android.os.Build;
 import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
 import androidx.core.content.FileProvider;
 import androidx.fragment.app.Fragment;
+import androidx.fragment.app.FragmentActivity;
 
+import android.provider.Settings;
 import android.text.TextUtils;
 import android.util.DisplayMetrics;
 
+import com.blankj.utilcode.util.ActivityUtils;
+import com.blankj.utilcode.util.AppUtils;
+import com.blankj.utilcode.util.LogUtils;
+import com.blankj.utilcode.util.ToastUtils;
+import com.blankj.utilcode.util.Utils;
+import com.hss01248.activityresult.ActivityResultListener;
+import com.hss01248.activityresult.StartActivityUtil;
+import com.vector.update_app.R;
 import com.vector.update_app.UpdateAppBean;
 import com.vector.update_app.listener.ExceptionHandler;
 import com.vector.update_app.listener.ExceptionHandlerHelper;
@@ -74,6 +85,40 @@ public class AppUpdateUtils {
         return !TextUtils.isEmpty(updateAppBean.getNewMd5())
                 && appFile.exists()
                 && Md5Util.getFileMD5(appFile).equalsIgnoreCase(updateAppBean.getNewMd5());
+    }
+
+    public static void checkAndInstallApk(final File file) {
+        Activity activity = ActivityUtils.getTopActivity();
+        if(!(activity instanceof FragmentActivity)){
+            installApp(Utils.getApp(),file);
+            return;
+        }
+        LogUtils.w(file.getAbsolutePath());
+        if (Build.VERSION.SDK_INT >= 26) {
+            boolean b = activity.getPackageManager().canRequestPackageInstalls();
+            if (b) {
+                installApp(activity, file);
+            } else {
+                ToastUtils.showLong(activity.getResources().getString(R.string.install_please_open_install_permission));
+                //  引导用户手动开启安装权限
+                Uri packageURI = Uri.parse("package:" + AppUtils.getAppPackageName());//设置这个才能
+                Intent intent = new Intent(Settings.ACTION_MANAGE_UNKNOWN_APP_SOURCES,packageURI);
+                //startActivityForResult(intent, 235);
+                StartActivityUtil.goOutAppForResult(activity, intent, new ActivityResultListener() {
+                    @Override
+                    public void onActivityResult(int requestCode, int resultCode, @Nullable Intent data) {
+                        installApp(activity, file);
+                    }
+
+                    @Override
+                    public void onActivityNotFound(Throwable e) {
+                        e.printStackTrace();
+                    }
+                });
+            }
+        } else {
+            installApp(activity, file);
+        }
     }
 
 

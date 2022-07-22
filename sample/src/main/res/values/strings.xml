@@ -1,3 +1,4 @@
 <resources>
     <string name="app_name">App更新</string>
+    <string name="update_not_now">暂不升级</string>
 </resources>

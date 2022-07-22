@@ -222,7 +222,7 @@ public class UpdateAppManager {
 
         if (DownloadService.isRunning || UpdateDialogFragment.isShow) {
             callback.onAfter();
-            Toast.makeText(mActivity, "app正在更新", Toast.LENGTH_SHORT).show();
+            Toast.makeText(mActivity, mActivity.getResources().getString(R.string.update_app_is_updating), Toast.LENGTH_SHORT).show();
             return;
         }
 

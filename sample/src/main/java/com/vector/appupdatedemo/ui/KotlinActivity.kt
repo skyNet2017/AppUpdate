@@ -266,7 +266,7 @@ class KotlinActivity : AppCompatActivity() {
                 , "新版本大小：${updateApp.targetSize}\n\n${updateApp.updateLog}")
         {
             positiveButton("升级") {
-                AppUpdateUtils.installApp(this@KotlinActivity, appFile)
+                AppUpdateUtils.checkAndInstallApk( appFile)
                 dismiss()
 
             }

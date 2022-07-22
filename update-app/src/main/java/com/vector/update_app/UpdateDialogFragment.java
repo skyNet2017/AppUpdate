@@ -197,7 +197,7 @@ public class UpdateDialogFragment extends DialogFragment implements View.OnClick
             String msg = "";
 
             if (!TextUtils.isEmpty(targetSize)) {
-                msg = "新版本大小：" + targetSize + "\n\n";
+                msg = getString(R.string.update_new_version_size) + targetSize + "\n\n";
             }
 
             if (!TextUtils.isEmpty(updateLog)) {
@@ -207,7 +207,7 @@ public class UpdateDialogFragment extends DialogFragment implements View.OnClick
             //更新内容
             mContentTextView.setText(msg);
             //标题
-            mTitleTextView.setText(TextUtils.isEmpty(dialogTitle) ? String.format("是否升级到%s版本？", newVersion) : dialogTitle);
+            mTitleTextView.setText(TextUtils.isEmpty(dialogTitle) ? getResources().getString(R.string.update_to_version_desc,newVersion) : dialogTitle);
             //强制更新
             if (mUpdateApp.isConstraint()) {
                 mLlClose.setVisibility(View.GONE);
@@ -286,9 +286,9 @@ public class UpdateDialogFragment extends DialogFragment implements View.OnClick
     public void onClick(View view) {
         int i = view.getId();
         if (i == R.id.btn_ok) {
-
+            installApp();
             //权限判断是否有访问外部存储空间权限
-            int flag = ActivityCompat.checkSelfPermission(getActivity(), Manifest.permission.WRITE_EXTERNAL_STORAGE);
+           /* int flag = ActivityCompat.checkSelfPermission(getActivity(), Manifest.permission.WRITE_EXTERNAL_STORAGE);
             if (flag != PackageManager.PERMISSION_GRANTED) {
                 if (ActivityCompat.shouldShowRequestPermissionRationale(getActivity(), Manifest.permission.WRITE_EXTERNAL_STORAGE)) {
                     // 用户拒绝过这个权限了，应该提示用户，为什么需要这个权限。
@@ -301,7 +301,7 @@ public class UpdateDialogFragment extends DialogFragment implements View.OnClick
             } else {
                 installApp();
 
-            }
+            }*/
 
         } else if (i == R.id.iv_close) {
             // TODO @WVector 这里是否要对UpdateAppBean的强制更新做处理？不会重合，当强制更新时，就不会显示这个按钮，也不会调这个方法。
@@ -329,7 +329,7 @@ public class UpdateDialogFragment extends DialogFragment implements View.OnClick
 
     private void installApp() {
         if (AppUpdateUtils.appIsDownloaded(mUpdateApp)) {
-            AppUpdateUtils.installApp(UpdateDialogFragment.this, AppUpdateUtils.getAppFile(mUpdateApp));
+            AppUpdateUtils.checkAndInstallApk( AppUpdateUtils.getAppFile(mUpdateApp));
             //安装完自杀
             //如果上次是强制更新，但是用户在下载完，强制杀掉后台，重新启动app后，则会走到这一步，所以要进行强制更新的判断。
             if (!mUpdateApp.isConstraint()) {
@@ -347,7 +347,7 @@ public class UpdateDialogFragment extends DialogFragment implements View.OnClick
         }
     }
 
-    @Override
+/*    @Override
     public void onRequestPermissionsResult(int requestCode, String[] permissions, int[] grantResults) {
         super.onRequestPermissionsResult(requestCode, permissions, grantResults);
         if (requestCode == 1) {
@@ -362,7 +362,7 @@ public class UpdateDialogFragment extends DialogFragment implements View.OnClick
             }
         }
 
-    }
+    }*/
 
     /**
      * 开启后台服务下载
@@ -452,7 +452,7 @@ public class UpdateDialogFragment extends DialogFragment implements View.OnClick
         mUpdateOkButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                AppUpdateUtils.installApp(UpdateDialogFragment.this, file);
+                AppUpdateUtils.checkAndInstallApk( file);
             }
         });
     }

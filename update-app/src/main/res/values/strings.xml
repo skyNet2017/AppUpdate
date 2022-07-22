@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="update_download_dialog_tile">start download</string>
+    <string name="update_download_dialog_connecting">connecting server</string>
+    <string name="update_download_dialog_path_error">downlodd url is wrong</string>
+    <string name="update_downloading">downloading：</string>
+    <string name="update_download_error">app update error，</string>
+    <string name="download_success_click_to_install">download success, please install it</string>
+    <string name="update_app_is_updating">app is in updating process</string>
+    <string name="install_please_open_install_permission">please allow the permission to install apk</string>
+    <string name="update_do_update">update</string>
+    <string name="update_ignore_this_version">ignore this version</string>
+    <string name="update_to_version_desc">update to version %s?</string>
+    <string name="update_new_version_size">new version size：</string>
+</resources>

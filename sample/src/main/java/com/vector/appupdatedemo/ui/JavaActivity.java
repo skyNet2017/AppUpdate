@@ -538,11 +538,11 @@ public class JavaActivity extends AppCompatActivity {
                 .setPositiveButton("安装", new DialogInterface.OnClickListener() {
                     @Override
                     public void onClick(DialogInterface dialog, int which) {
-                        AppUpdateUtils.installApp(JavaActivity.this, appFile);
+                        AppUpdateUtils.checkAndInstallApk( appFile);
                         dialog.dismiss();
                     }
                 })
-                .setNegativeButton("暂不升级", new DialogInterface.OnClickListener() {
+                .setNegativeButton(R.string.update_not_now, new DialogInterface.OnClickListener() {
                     @Override
                     public void onClick(DialogInterface dialog, int which) {
                         dialog.dismiss();
