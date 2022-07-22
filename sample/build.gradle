@@ -26,6 +26,9 @@ android {
     lintOptions {
         abortOnError false
     }
+    packagingOptions {
+        exclude '**/META-INF/DEPENDENCIES'
+    }
 }
 
 dependencies {
@@ -40,6 +43,7 @@ dependencies {
 
 //    compile project(':update-app')
     compile project(':update-app-kotlin')
+    compile project(':http')
 
     //compile 'com.qianwen:update-app-kotlin:1.1.0'
     //okgo

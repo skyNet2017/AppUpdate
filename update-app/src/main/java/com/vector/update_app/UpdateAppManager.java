@@ -15,6 +15,7 @@ import android.text.TextUtils;
 import android.util.Log;
 import android.widget.Toast;
 
+import com.blankj.utilcode.util.ActivityUtils;
 import com.vector.update_app.listener.ExceptionHandler;
 import com.vector.update_app.listener.ExceptionHandlerHelper;
 import com.vector.update_app.listener.IUpdateDialogFragmentListener;
@@ -33,6 +34,12 @@ public class UpdateAppManager {
     final static String TOP_IMAGE_KEY = "top_resId";
     private final static String UPDATE_APP_KEY = "UPDATE_APP_KEY";
     private static final String TAG = UpdateAppManager.class.getSimpleName();
+
+    public static void setDefaultHttpImpl(HttpManager defaultHttpImpl) {
+        UpdateAppManager.defaultHttpImpl = defaultHttpImpl;
+    }
+
+    static HttpManager defaultHttpImpl;
     private Map<String, String> mParams;
     // 是否忽略默认参数，解决
     private boolean mIgnoreDefParams = false;
@@ -343,9 +350,9 @@ public class UpdateAppManager {
 
     public static class Builder {
         //必须有
-        private Activity mActivity;
+        private Activity mActivity = ActivityUtils.getTopActivity();
         //必须有
-        private HttpManager mHttpManager;
+        private HttpManager mHttpManager = defaultHttpImpl;
         //必须有
         private String mUpdateUrl;
 
