@@ -101,7 +101,7 @@ public class UpdateAppByHttpUtil implements HttpManager, Initializer<String> {
 
                     @Override
                     public void onSuccess(ResponseBean<FileDownlodConfig> response) {
-                        callback.onResponse(new File(path,fileName));
+                        callback.onResponse(new File(response.data.filePath));
                     }
 
                     @Override
