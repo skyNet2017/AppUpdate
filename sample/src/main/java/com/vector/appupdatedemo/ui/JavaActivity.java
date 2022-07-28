@@ -37,8 +37,8 @@ import java.util.Map;
 
 public class JavaActivity extends AppCompatActivity {
     private static final String TAG = JavaActivity.class.getSimpleName();
-   private String mUpdateUrl = "https://raw.githubusercontent.com/skyNet2017/AppUpdateDemo/master/json/json.txt";
-    private String mUpdateUrl1 = "https://raw.githubusercontent.com/skyNet2017/AppUpdateDemo/master/json/json1.txt";
+   private String mUpdateUrl = "https://raw.githubusercontent.com/skyNet2017/AppUpdate/master/json/json.txt";
+    private String mUpdateUrl1 = "https://raw.githubusercontent.com/skyNet2017/AppUpdate/master/json/json.txt";
     private boolean isShowDownloadProgress;
     private String mApkFileUrl = "https://raw.githubusercontent.com/WVector/AppUpdateDemo/master/apk/sample-debug.apk";
 
