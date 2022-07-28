@@ -77,14 +77,53 @@ public class AppUpdateUtils {
         return appName;
     }
 
-    public static boolean appIsDownloaded(UpdateAppBean updateAppBean) {
+    public static boolean checkApkMd5AfterDownload(UpdateAppBean updateAppBean, File appFile ) {
+
+        if(!appFile.exists()){
+            LogUtils.i("下载的文件不存在",appFile.getAbsolutePath());
+            return false;
+        }
+        if(TextUtils.isEmpty(updateAppBean.getNewMd5())){
+            LogUtils.i("远程未配置md5,无需校验");
+            return true;
+        }
+        String md5 = Md5Util.getFileMD5(appFile);
+        if(updateAppBean.getNewMd5().equalsIgnoreCase(md5)){
+            LogUtils.i("本地之前下载的文件和远程md5一致,直接使用",appFile.getAbsolutePath());
+            return true;
+        }
+        LogUtils.w("md5校验不通过,远程:",updateAppBean.getNewMd5(),"下载的apk md5 ",md5);
+        return false;
+
+     /*   return !TextUtils.isEmpty(updateAppBean.getNewMd5())
+                && appFile.exists()
+                && Md5Util.getFileMD5(appFile).equalsIgnoreCase(updateAppBean.getNewMd5());*/
+    }
+
+    public static boolean appHasDownloaded(UpdateAppBean updateAppBean) {
         //md5不为空
         //文件存在
         //md5只一样
         File appFile = getAppFile(updateAppBean);
-        return !TextUtils.isEmpty(updateAppBean.getNewMd5())
+        if(!appFile.exists()){
+            LogUtils.i("下载的文件不存在",appFile.getAbsolutePath());
+            return false;
+        }
+        if(TextUtils.isEmpty(updateAppBean.getNewMd5())){
+            LogUtils.i("远程未配置md5,不使用本地之前下载的,重新下载");
+            return false;
+        }
+        String md5 = Md5Util.getFileMD5(appFile);
+        if(updateAppBean.getNewMd5().equalsIgnoreCase(md5)){
+            LogUtils.i("本地之前下载的文件和远程md5一致,直接使用",appFile.getAbsolutePath());
+            return true;
+        }
+        LogUtils.w("md5校验不通过,远程:",updateAppBean.getNewMd5(),"之前下载的apk md5 ",md5);
+        return false;
+
+     /*   return !TextUtils.isEmpty(updateAppBean.getNewMd5())
                 && appFile.exists()
-                && Md5Util.getFileMD5(appFile).equalsIgnoreCase(updateAppBean.getNewMd5());
+                && Md5Util.getFileMD5(appFile).equalsIgnoreCase(updateAppBean.getNewMd5());*/
     }
 
     public static void checkAndInstallApk(final File file) {

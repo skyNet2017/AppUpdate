@@ -18,7 +18,7 @@ public class SilenceUpdateCallback extends UpdateCallback {
         //设置不显示通知栏下载进度
         updateAppBean.dismissNotificationProgress(true);
 
-        if (AppUpdateUtils.appIsDownloaded(updateApp)) {
+        if (AppUpdateUtils.appHasDownloaded(updateApp)) {
             showDialog(updateApp, updateAppManager, AppUpdateUtils.getAppFile(updateApp));
         } else {
             //假如是onlyWifi,则进行判断网络环境

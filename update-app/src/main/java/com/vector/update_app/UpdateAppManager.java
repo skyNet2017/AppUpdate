@@ -16,6 +16,8 @@ import android.util.Log;
 import android.widget.Toast;
 
 import com.blankj.utilcode.util.ActivityUtils;
+import com.blankj.utilcode.util.AppUtils;
+import com.blankj.utilcode.util.LogUtils;
 import com.vector.update_app.listener.ExceptionHandler;
 import com.vector.update_app.listener.ExceptionHandlerHelper;
 import com.vector.update_app.listener.IUpdateDialogFragmentListener;
@@ -154,7 +156,11 @@ public class UpdateAppManager {
     }
 
 
-    private boolean verify() {
+    private boolean notUpdate() {
+        if(AppUtils.getAppVersionCode() >= mUpdateApp.getVersionCode()){
+            LogUtils.i("远程app版本号小于等于当前版本号",AppUtils.getAppVersionCode(),mUpdateApp.getVersionCode());
+            return true;
+        }
         //版本忽略
         if (mShowIgnoreVersion && AppUpdateUtils.isNeedIgnore(mActivity, mUpdateApp.getNewVersion())) {
             return true;
@@ -177,7 +183,7 @@ public class UpdateAppManager {
     public void showDialogFragment() {
 
         //校验
-        if (verify()) return;
+        if (notUpdate()) return;
 
         if (mActivity != null && !mActivity.isFinishing()) {
             Bundle bundle = new Bundle();

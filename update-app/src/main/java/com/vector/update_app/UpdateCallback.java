@@ -22,6 +22,7 @@ public class UpdateCallback {
                     .setOriginRes(json)
                     .setNewVersion(jsonObject.optString("new_version"))
                     .setApkFileUrl(jsonObject.optString("apk_file_url"))
+                    .setVersionCode(jsonObject.optInt("version_code"))
                     .setTargetSize(jsonObject.optString("target_size"))
                     .setUpdateLog(jsonObject.optString("update_log"))
                     .setConstraint(jsonObject.optBoolean("constraint"))

@@ -1,18 +1,15 @@
 package com.vector.update_app;
 
-import android.Manifest;
 import android.app.Activity;
 import android.content.ComponentName;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.ServiceConnection;
-import android.content.pm.PackageManager;
 import android.graphics.Color;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.IBinder;
 import androidx.annotation.Nullable;
-import androidx.core.app.ActivityCompat;
 import androidx.fragment.app.DialogFragment;
 import androidx.fragment.app.FragmentManager;
 
@@ -29,8 +26,8 @@ import android.widget.Button;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.TextView;
-import android.widget.Toast;
 
+import com.blankj.utilcode.util.ToastUtils;
 import com.vector.update_app.listener.ExceptionHandler;
 import com.vector.update_app.listener.ExceptionHandlerHelper;
 import com.vector.update_app.listener.IUpdateDialogFragmentListener;
@@ -328,7 +325,7 @@ public class UpdateDialogFragment extends DialogFragment implements View.OnClick
     }
 
     private void installApp() {
-        if (AppUpdateUtils.appIsDownloaded(mUpdateApp)) {
+        if (AppUpdateUtils.appHasDownloaded(mUpdateApp)) {
             AppUpdateUtils.checkAndInstallApk( AppUpdateUtils.getAppFile(mUpdateApp));
             //安装完自杀
             //如果上次是强制更新，但是用户在下载完，强制杀掉后台，重新启动app后，则会走到这一步，所以要进行强制更新的判断。
@@ -408,7 +405,11 @@ public class UpdateDialogFragment extends DialogFragment implements View.OnClick
                 public boolean onFinish(final File file) {
                     if (!UpdateDialogFragment.this.isRemoving()) {
                         if (mUpdateApp.isConstraint()) {
-                            showInstallBtn(file);
+                            if(AppUpdateUtils.checkApkMd5AfterDownload(mUpdateApp,file)){
+                                showInstallBtn(file);
+                            }else {
+                                ToastUtils.showLong("md5 verfy failed");
+                            }
                         } else {
                             dismissAllowingStateLoss();
                         }
@@ -433,7 +434,12 @@ public class UpdateDialogFragment extends DialogFragment implements View.OnClick
                         dismiss();
                     }
                     if (mActivity != null) {
-                        AppUpdateUtils.installApp(mActivity, file);
+                        if(AppUpdateUtils.checkApkMd5AfterDownload(mUpdateApp,file)){
+                            AppUpdateUtils.checkAndInstallApk(file);
+                        }else {
+                            ToastUtils.showLong("md5 verfy failed");
+                        }
+
                         //返回 true ，自己处理。
                         return true;
                     } else {

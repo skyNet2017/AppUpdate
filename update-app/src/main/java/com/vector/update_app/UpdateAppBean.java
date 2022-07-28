@@ -2,17 +2,21 @@ package com.vector.update_app;
 
 import android.text.TextUtils;
 
+import androidx.annotation.Keep;
+
 import java.io.Serializable;
 
 /**
  * 版本信息
  */
+@Keep
 public class UpdateAppBean implements Serializable {
     private static final long serialVersionUID = 1L;
 
     /**
      * update : Yes
      * new_version : xxxxx
+     * version_code : 123
      * apk_url : http://cdn.the.url.of.apk/or/patch
      * update_log : xxxx
      * delta : false
@@ -23,6 +27,18 @@ public class UpdateAppBean implements Serializable {
     private String update;
     //新版本号
     private String new_version;
+
+    public int getVersionCode() {
+        return version_code;
+    }
+
+    public UpdateAppBean setVersionCode(int version_code) {
+        this.version_code = version_code;
+        return this;
+    }
+
+    //新版本号
+    private int version_code;
     //新app下载地址
     private String apk_file_url;
     //更新日志
