@@ -113,12 +113,14 @@ public class AppUpdateUtils {
             LogUtils.i("远程未配置md5,不使用本地之前下载的,重新下载");
             return false;
         }
-        String md5 = Md5Util.getFileMD5(appFile);
+        /*String md5 = Md5Util.getFileMD5(appFile);
         if(updateAppBean.getNewMd5().equalsIgnoreCase(md5)){
             LogUtils.i("本地之前下载的文件和远程md5一致,直接使用",appFile.getAbsolutePath());
             return true;
         }
-        LogUtils.w("md5校验不通过,远程:",updateAppBean.getNewMd5(),"之前下载的apk md5 ",md5);
+         LogUtils.w("md5校验不通过,远程:",updateAppBean.getNewMd5(),"之前下载的apk md5 ",md5);
+        */
+        LogUtils.w("不复用本地存储的apk,交由下载框架去实现apk文件的缓存");
         return false;
 
      /*   return !TextUtils.isEmpty(updateAppBean.getNewMd5())
