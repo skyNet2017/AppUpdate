@@ -13,6 +13,7 @@ import android.view.View;
 import android.widget.Button;
 import android.widget.Toast;
 
+import com.hss01248.update_default.UpdateAppDefault;
 import com.vector.appupdatedemo.R;
 import com.vector.appupdatedemo.http.OkGoUpdateHttpUtil;
 import com.vector.appupdatedemo.http.UpdateAppHttpUtil;
@@ -111,7 +112,7 @@ public class JavaActivity extends AppCompatActivity {
                 //更新地址
                 .setUpdateUrl(mUpdateUrl1)
                 //实现httpManager接口的对象
-                .setHttpManager(new UpdateAppHttpUtil())
+                .setHttpManager(new UpdateAppDefault())
                 .build()
                 .update();
     }
