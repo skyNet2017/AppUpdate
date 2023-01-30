@@ -13,6 +13,7 @@ import android.view.View;
 import android.widget.Button;
 import android.widget.Toast;
 
+import com.hss01248.feedback.FeedbackUtil;
 import com.hss01248.update_default.UpdateAppDefault;
 import com.hss01248.update_default.pgyer.PygerAppUpdateUtil;
 import com.vector.appupdatedemo.R;
@@ -629,5 +630,9 @@ public class JavaActivity extends AppCompatActivity {
                 e.printStackTrace();
             }
         });
+    }
+
+    public void pygerFeedback(View view) {
+        FeedbackUtil.showPygerFeedback("https://www.pgyer.com/YVeW");
     }
 }

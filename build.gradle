@@ -44,6 +44,7 @@ allprojects {
             url 'https://maven.google.com/'
             name 'Google'
         }
+        maven { url 'https://github.com/link-u/AndroidGlideAvifDecoder/raw/master/repository' }
     }
     tasks.withType(Javadoc) {
         options {

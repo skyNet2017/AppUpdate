@@ -256,6 +256,50 @@ V3.3.0
 	2，适配kotlin，写法更简单。 
 
 
+
+
+
+
+
+# 基于蒲公英网站的app更新和用户反馈系统
+
+## app更新
+
+```groovy
+   api 'com.github.skyNet2017.AppUpdate:update-default:4.0.6'
+```
+
+
+
+```java
+PygerAppUpdateUtil.doUpdate("key", "token",new ExceptionHandler() {
+            @Override
+            public void onException(Exception e) {
+                e.printStackTrace();
+```
+
+![image-20230130120530421](https://cdn.jsdelivr.net/gh/shuiniuhss/myimages@main/imagemac3/image-20230130120530421.png)
+
+## 用户反馈
+
+```groovy
+   api 'com.github.skyNet2017.AppUpdate:feedback:4.0.6'
+```
+
+
+
+```java
+FeedbackUtil.showPygerFeedback("https://www.pgyer.com/YVeW");
+```
+
+
+
+![image-20230130120502987](https://cdn.jsdelivr.net/gh/shuiniuhss/myimages@main/imagemac3/image-20230130120502987.png)
+
+
+
+
+
 ## License
 
    	Copyright 2017 千匍
