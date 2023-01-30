@@ -346,7 +346,8 @@ public class UpdateAppManager {
                 //没有则进行下载，监听下载完成，弹出安装对话框
 
             } else {
-                callback.noNewApp("没有新版本");
+                LogUtils.w("更新配置的总开关关闭");
+                callback.noNewApp("更新开关关闭");
             }
         } catch (Exception ignored) {
             ignored.printStackTrace();

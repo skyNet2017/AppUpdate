@@ -83,7 +83,7 @@ public class AppUpdateUtils {
             LogUtils.i("下载的文件不存在",appFile.getAbsolutePath());
             return false;
         }
-        if(TextUtils.isEmpty(updateAppBean.getNewMd5())){
+        if(TextUtils.isEmpty(updateAppBean.getNewMd5()) || "null".equals(updateAppBean.getNewMd5())){
             LogUtils.i("远程未配置md5,无需校验");
             return true;
         }
@@ -109,7 +109,7 @@ public class AppUpdateUtils {
             LogUtils.i("下载的文件不存在",appFile.getAbsolutePath());
             return false;
         }
-        if(TextUtils.isEmpty(updateAppBean.getNewMd5())){
+        if(TextUtils.isEmpty(updateAppBean.getNewMd5())|| "null".equals(updateAppBean.getNewMd5())){
             LogUtils.i("远程未配置md5,不使用本地之前下载的,重新下载");
             return false;
         }

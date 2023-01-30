@@ -88,6 +88,14 @@
             android:onClick="onlyDownload"
             android:text="只用下载功能"
             />
+        <Button
+            android:id="@+id/btn_pyger"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_margin="16dp"
+            android:onClick="pyger"
+            android:text="蒲公英下载"
+            />
 
     </LinearLayout>
 </ScrollView>

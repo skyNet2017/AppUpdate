@@ -45,6 +45,8 @@ dependencies {
     compile project(':update-app-kotlin')
     compile project(':http')
 
+    compile project(':update-default')
+
     //compile 'com.qianwen:update-app-kotlin:1.1.0'
     //okgo
     //rxjava 1

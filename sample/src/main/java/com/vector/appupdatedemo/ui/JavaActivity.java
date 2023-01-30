@@ -13,6 +13,7 @@ import android.view.View;
 import android.widget.Button;
 import android.widget.Toast;
 
+import com.hss01248.update_default.pgyer.PygerAppUpdateUtil;
 import com.vector.appupdatedemo.R;
 import com.vector.appupdatedemo.http.OkGoUpdateHttpUtil;
 import com.vector.appupdatedemo.http.UpdateAppHttpUtil;
@@ -619,4 +620,13 @@ public class JavaActivity extends AppCompatActivity {
     }
 
 
+    public void pyger(View view) {
+        PygerAppUpdateUtil.doUpdate("xxx", "yyy",
+                new ExceptionHandler() {
+            @Override
+            public void onException(Exception e) {
+                e.printStackTrace();
+            }
+        });
+    }
 }
