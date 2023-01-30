@@ -10,7 +10,7 @@
             tools:node="merge">
             <meta-data
                 tools:node="merge"
-                android:name="com.hss01248.appupdate.http.UpdateAppByHttpUtil"
+                android:name="com.hss01248.update_default.UpdateAppDefault"
                 android:value="androidx.startup" />
         </provider>
     </application>
