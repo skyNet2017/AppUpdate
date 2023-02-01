@@ -623,7 +623,7 @@ public class JavaActivity extends AppCompatActivity {
 
 
     public void pyger(View view) {
-        PygerAppUpdateUtil.doUpdate("xxx", "yyy",
+        PygerAppUpdateUtil.doUpdate("rrr", "rrr",
                 new ExceptionHandler() {
             @Override
             public void onException(Exception e) {

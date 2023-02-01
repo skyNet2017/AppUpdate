@@ -3,6 +3,7 @@ package com.hss01248.update_default.pgyer;
 import android.content.Intent;
 import android.net.Uri;
 import android.text.TextUtils;
+import android.util.Log;
 
 import androidx.annotation.NonNull;
 
@@ -71,6 +72,7 @@ public class UpdateAppPgyer extends UpdateAppDefault {
                         int code = jsonObject.optInt("code", -1);
                         if(code != 0){
                             callBack.onError(code+"-"+jsonObject.optString("message"));
+                            Log.w("update",code+"-"+jsonObject.optString("message"));
                             return;
                         }
                         String dataJson = jsonObject.optString("data");
