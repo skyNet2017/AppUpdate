@@ -1,12 +1,20 @@
 package com.hss01248.update_default;
 
+import android.app.Activity;
+import android.app.Application;
 import android.content.Context;
+import android.os.Bundle;
 
 import androidx.annotation.NonNull;
 import androidx.startup.Initializer;
 
 
+import com.blankj.utilcode.util.ThreadUtils;
 import com.google.gson.Gson;
+import com.hss01248.appstartup.api.AppStartUpUtil;
+import com.hss01248.appstartup.api.LogAppStartUpCallback;
+import com.hss01248.update_default.pgyer.PygerAppUpdateUtil;
+import com.hss01248.update_default.pgyer.UpdateAppPgyer;
 import com.liulishuo.filedownloader.BaseDownloadTask;
 import com.liulishuo.filedownloader.FileDownloadSampleListener;
 import com.liulishuo.filedownloader.FileDownloader;
@@ -173,8 +181,20 @@ public class UpdateAppDefault implements HttpManager, Initializer<String> {
     @NonNull
     @Override
     public String create(@NonNull Context context) {
-        UpdateAppManager.setDefaultHttpImpl(new UpdateAppDefault());
+        UpdateAppManager.setDefaultHttpImpl(new UpdateAppPgyer());
         FileDownloader.setup(context);
+        AppStartUpUtil.add(new LogAppStartUpCallback(){
+            @Override
+            public void onFirstActivityCreated(Application app, Activity activity, Bundle savedInstanceState) {
+                super.onFirstActivityCreated(app, activity, savedInstanceState);
+                ThreadUtils.getMainHandler().postDelayed(new Runnable() {
+                    @Override
+                    public void run() {
+                        PygerAppUpdateUtil.doUpdate();
+                    }
+                },1200);
+            }
+        });
         return "updateBy all";
     }
 

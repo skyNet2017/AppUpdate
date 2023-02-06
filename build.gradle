@@ -8,6 +8,7 @@ buildscript {
     }catch(Throwable throwable){
         throwable.printStackTrace()
     }
+    apply from:'uploadToPyger.gradle'
     ext{
         groupId='com.github.skyNet2017.AppUpdate'
         versionCode = '2.0.00'

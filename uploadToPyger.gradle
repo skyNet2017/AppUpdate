@@ -1,0 +1,246 @@
+import groovy.json.JsonSlurper
+
+
+
+def apiKey(){
+    return getFromLocalProperties("pyger_api_key")
+}
+def apiToken(){
+    return getFromLocalProperties("pyger_api_token")
+}
+
+def getFromLocalProperties(String key){
+    try {
+        File file = rootProject.file('local.properties')
+        if(file.exists()){
+
+            InputStream inputStream = rootProject.file('local.properties').newDataInputStream();
+            Properties properties = new Properties()
+            properties.load(inputStream)
+            return properties.getProperty(key)
+            //properties.
+        }
+    }catch(Throwable throwable){
+        throwable.printStackTrace()
+    }
+    return null
+}
+
+
+gradle.addProjectEvaluationListener(new ProjectEvaluationListener() {
+    @Override
+    void beforeEvaluate(Project project) {
+
+    }
+
+    @Override
+    void afterEvaluate(Project project, ProjectState state) {
+        if (project.plugins.findPlugin('com.android.application') == null) {
+            return
+        }
+        project.dependencies {
+            //api 'com.github.skyNet2017.AppUpdate:update-default:4.0.6'
+        }
+        project.android{
+            buildTypes.each{
+                it.buildConfigField 'String', 'pyger_api_key', '"' + apiKey() + '"'
+                it.buildConfigField 'String', 'pyger_api_token', '"' + apiToken() + '"'
+            }
+        }
+
+    }
+})
+
+
+
+/**
+ * 上传apk到蒲公英  https://juejin.cn/post/7088126173107978253
+ */
+def uploadApk(boolean isRelease,Project porject) {
+    //查找上传的apk文件
+
+    def curPath =System.getProperty("user.dir") ;
+    println "curPath:"+curPath;
+    def apkPath = ""
+    if (isRelease) {
+        apkPath = "${curPath}/build/outputs/apk/release"
+    } else {
+        apkPath = "${curPath}/build/outputs/apk/debug"
+    }
+
+    println "porject.path:"+porject.path;
+    println "projectDir:"+projectDir;
+    println "rootDir:"+rootDir;
+    println "buildDir:"+buildDir;
+
+    def apkDir = new File(apkPath)
+    if (!apkDir.exists()) {
+        throw new RuntimeException("apk output path not exists! "+apkPath)
+    }
+
+    def apk = null
+    for (int i = apkDir.listFiles().length - 1; i >= 0; i--) {
+        File file = apkDir.listFiles()[i]
+        if (file.name.endsWith(".apk")) {
+            apk = file
+            break
+        }
+    }
+    if (apk == null) {
+        throw new RuntimeException("apk file not exists!")
+    }
+
+    println "*************** start upload file ***************"
+
+    def twoHyphens = "--"
+    def boundary = "*********"
+    def end = "\r\n"
+
+    //模拟表单上传 multipart/form-data
+    def conn = new URL("https://www.pgyer.com/apiv2/app/upload").openConnection()
+    conn.setRequestMethod('POST')
+    conn.setRequestProperty("Connection", "Keep-Alive")
+    conn.setRequestProperty("Charset", "UTF-8")
+    conn.setRequestProperty("Content-Type", "multipart/form-data;boundary=" + boundary)
+    conn.setDoInput(true)
+    conn.setDoOutput(true)
+
+    def apiKey = apiKey()
+    if(apiKey == null){
+        throw new RuntimeException("蒲公英API key没有配置到local.properties中. key为: pyger_api_key")
+    }
+
+
+    //添加参数：_api_key
+    def sb = new StringBuilder()
+    sb.append(twoHyphens).append(boundary).append(end)
+    sb.append("Content-Disposition: form-data; name=_api_key")
+    sb.append(end).append(end)
+    sb.append(apiKey).append(end)
+
+    //添加参数：buildUpdateDescription 更新日志，取值git
+    sb.append(twoHyphens).append(boundary).append(end)
+    sb.append("Content-Disposition: form-data; name=buildUpdateDescription")
+    sb.append(end).append(end)
+    sb.append(getGitVersionInfo()).append(end)
+
+    //添加参数：buildInstallType 设置安装方式，1为公开方式安装，具体的安装类型参考蒲公英api网址
+    sb.append(twoHyphens).append(boundary).append(end)
+    sb.append("Content-Disposition: form-data; name=buildInstallType")
+    sb.append(end).append(end)
+    sb.append(1).append(end)
+
+    //添加参数：buildPassword 设置密码
+//    sb.append(twoHyphens).append(boundary).append(end)
+//    sb.append("Content-Disposition: form-data; name=buildPassword")
+//    sb.append(end).append(end)
+//    sb.append("1024").append(end)
+
+    //添加参数file: 需要上传的apk文件
+    sb.append(twoHyphens).append(boundary).append(end)
+    sb.append("Content-Disposition: form-data; name=file;filename=").append(apk.getName())
+    sb.append(end).append(end)
+
+    def dos = new DataOutputStream(conn.getOutputStream())
+    dos.writeBytes(sb.toString())
+    dos.flush()
+    sb.delete(0, sb.length())
+
+    def fis = new FileInputStream(apk)
+    byte[] bf = new byte[8192]
+    int len
+    while ((len = fis.read(bf)) != -1) {
+        dos.write(bf, 0, len)
+    }
+    sb.append(end)
+    sb.append(twoHyphens).append(boundary).append(end)
+    dos.writeBytes(sb.toString())
+
+    dos.flush()
+    fis.close()
+    dos.close()
+    conn.connect()
+
+    def text = conn.getContent().text
+    def resp = new JsonSlurper().parseText(text)
+
+
+    println text
+    println "*************** upload finish ***************"
+
+    if (resp.code != 0) {
+        throw new RuntimeException(resp.message)
+    }
+
+    //浏览器中打开短连接
+    def url = "https://www.pgyer.com/" + resp.data.buildShortcutUrl
+    println("上传成功，应用链接：" + url)
+
+}
+
+
+static def getGitVersionInfo() {
+    //获取最新commit id
+    def commitId = 'git rev-parse HEAD'.execute().text.trim()
+    //获取一条日志
+    //git log --pretty=format:“%s” b29b8b608b4d00f85b5d08663120b286ea657b4a -1
+    def logTxt = 'git log -1 --pretty=format:“%s” ' + commitId
+    //--online
+    def log = logTxt.execute().text.trim().replaceAll("“","").replaceAll("”","")
+    println("submit msg: $log")
+    return log
+}
+
+//打包测试环境apk 上传蒲公英 发送邮件功能使用蒲公英自带的邮件功能
+task uploadReleaseApk(group: "upload") {
+    dependsOn("assembleRelease")
+
+    doLast {
+        uploadApk(true)
+    }
+}
+
+//打包测试环境apk 上传蒲公英 发送邮件功能使用蒲公英自带的邮件功能
+task uploadDebugApk(group: "upload") {
+    dependsOn("assembleDebug")
+    doLast {
+        uploadApk(false)
+    }
+}
+
+rootProject.subprojects.each { project ->
+    project.afterEvaluate{
+        addTasks222(project)
+    }
+}
+
+def addTasks222(Project project) {
+
+    //只对可运行工程操作,不care library类型的module
+    if (project.plugins.findPlugin('com.android.application') == null) {
+        return
+    }
+    println("应用upload apk 相关任务到--->" + project.name)
+    //project.apply plugin: "com.github.ben-manes.versions"
+
+    project.android.applicationVariants.all { variant ->
+        println("parseDeps--->variant " + variant.name)
+
+
+        //不加project.就会创建到跟目录
+        project.tasks.create(name: "uploadApkOf${project.name.capitalize()}${variant.name.capitalize()}"
+                , description: "上传apk到蒲公英-${project.name.capitalize()}${variant.name.capitalize()}"
+                , group: "uploadApk") {
+             dependsOn("assemble${variant.name.capitalize()}")
+            doLast {
+                //如何在这里指定输出到文件?--> 已解决,exec里指定standardOutput
+                uploadApk("Release".equals(variant.name.capitalize()),project)
+
+            }
+        }
+
+    }
+
+
+
+}
