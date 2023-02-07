@@ -5,8 +5,8 @@ import groovy.json.JsonSlurper
 def apiKey(){
     return getFromLocalProperties("pyger_api_key")
 }
-def apiToken(){
-    return getFromLocalProperties("pyger_api_token")
+def appKey(){
+    return getFromLocalProperties("pyger_app_key")
 }
 
 def getFromLocalProperties(String key){
@@ -44,7 +44,7 @@ gradle.addProjectEvaluationListener(new ProjectEvaluationListener() {
         project.android{
             buildTypes.each{
                 it.buildConfigField 'String', 'pyger_api_key', '"' + apiKey() + '"'
-                it.buildConfigField 'String', 'pyger_api_token', '"' + apiToken() + '"'
+                it.buildConfigField 'String', 'pyger_app_key', '"' + appKey() + '"'
             }
         }
 

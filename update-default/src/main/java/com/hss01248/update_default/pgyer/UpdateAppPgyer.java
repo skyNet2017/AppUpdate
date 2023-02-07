@@ -41,7 +41,7 @@ public class UpdateAppPgyer extends UpdateAppDefault {
                 .addInterceptor(new HttpLoggingInterceptor().setLevel(HttpLoggingInterceptor.Level.BODY))
                 .build();
         if(params!= null && !params.isEmpty()){
-            if(url.contains("?")){
+            if(!url.contains("?")){
                 url = url+"?";
             }else {
                 if(!url.endsWith("&")){
@@ -49,7 +49,9 @@ public class UpdateAppPgyer extends UpdateAppDefault {
                 }
             }
             for (String s : params.keySet()) {
-                url = url + URLEncoder.encode(s)+"="+URLEncoder.encode(params.get(s))+"&";
+                if(!url.contains(URLEncoder.encode(s)+"=")){
+                    url = url + URLEncoder.encode(s)+"="+URLEncoder.encode(params.get(s))+"&";
+                }
             }
         }
 
