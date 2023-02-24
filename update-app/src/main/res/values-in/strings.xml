@@ -1,15 +1,15 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <string name="update_download_dialog_tile">开始下载</string>
-    <string name="update_download_dialog_connecting">正在连接服务器</string>
-    <string name="update_download_dialog_path_error">新版本下载路径错误</string>
-    <string name="update_downloading">正在下载：</string>
-    <string name="update_download_error">更新新版本出错，</string>
-    <string name="download_success_click_to_install">下载完成，请点击安装</string>
-    <string name="update_app_is_updating">app正在更新</string>
-    <string name="install_please_open_install_permission">请打开本app的安装apk的权限</string>
-    <string name="update_do_update">升级</string>
-    <string name="update_ignore_this_version">忽略此版本</string>
-    <string name="update_to_version_desc">是否升级到%s版本?</string>
-    <string name="update_new_version_size">新版本大小：</string>
+    <string name="download_success_click_to_install">Unduhan selesai, silakan klik untuk menginstal</string>
+    <string name="install_please_open_install_permission">Silakan buka izin untuk menginstal apk aplikasi ini</string>
+    <string name="update_app_is_updating">aplikasi sedang diperbarui</string>
+    <string name="update_do_update">meningkatkan</string>
+    <string name="update_download_dialog_connecting">menghubungkan ke server</string>
+    <string name="update_download_dialog_path_error">Jalur unduhan versi baru salah</string>
+    <string name="update_download_dialog_tile">mulai Unduh</string>
+    <string name="update_download_error">Kesalahan memperbarui versi baru，</string>
+    <string name="update_downloading">mengunduh：</string>
+    <string name="update_ignore_this_version">abaikan versi ini</string>
+    <string name="update_new_version_size">ukuran versi baru：</string>
+    <string name="update_to_version_desc">Apakah akan meningkatkan ke versi %s?</string>
 </resources>
