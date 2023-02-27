@@ -1,4 +1,4 @@
-package com.hss01248.update_default.pgyer;
+package com.hss01248.update_pyger;
 
 
 import android.text.TextUtils;
@@ -7,14 +7,10 @@ import androidx.annotation.Nullable;
 
 import com.blankj.utilcode.util.AppUtils;
 import com.blankj.utilcode.util.LogUtils;
-import com.blankj.utilcode.util.ReflectUtils;
 import com.blankj.utilcode.util.Utils;
-import com.hss01248.update_default.UpdateAppDefault;
 import com.liulishuo.filedownloader.FileDownloader;
 import com.vector.update_app.UpdateAppManager;
 import com.vector.update_app.listener.ExceptionHandler;
-
-import java.lang.reflect.Field;
 
 /**
  * @Despciption todo

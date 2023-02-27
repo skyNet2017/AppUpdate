@@ -6,16 +6,17 @@ import android.content.DialogInterface;
 import android.content.Intent;
 import android.os.Bundle;
 import android.os.Environment;
-import androidx.appcompat.app.AppCompatActivity;
 import android.text.TextUtils;
 import android.util.Log;
 import android.view.View;
 import android.widget.Button;
 import android.widget.Toast;
 
+import androidx.appcompat.app.AppCompatActivity;
+
 import com.hss01248.feedback.FeedbackUtil;
 import com.hss01248.update_default.UpdateAppDefault;
-import com.hss01248.update_default.pgyer.PygerAppUpdateUtil;
+import com.hss01248.update_pyger.PygerAppUpdateUtil;
 import com.vector.appupdatedemo.R;
 import com.vector.appupdatedemo.http.OkGoUpdateHttpUtil;
 import com.vector.appupdatedemo.http.UpdateAppHttpUtil;

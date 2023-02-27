@@ -9,10 +9,6 @@ import android.graphics.Color;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.IBinder;
-import androidx.annotation.Nullable;
-import androidx.fragment.app.DialogFragment;
-import androidx.fragment.app.FragmentManager;
-
 import android.text.TextUtils;
 import android.util.DisplayMetrics;
 import android.view.Gravity;
@@ -26,6 +22,10 @@ import android.widget.Button;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.TextView;
+
+import androidx.annotation.Nullable;
+import androidx.fragment.app.DialogFragment;
+import androidx.fragment.app.FragmentManager;
 
 import com.blankj.utilcode.util.ToastUtils;
 import com.vector.update_app.listener.ExceptionHandler;
@@ -421,7 +421,13 @@ public class UpdateDialogFragment extends DialogFragment implements View.OnClick
                 @Override
                 public void onError(String msg) {
                     if (!UpdateDialogFragment.this.isRemoving()) {
-                        dismissAllowingStateLoss();
+                        try {
+                            dismissAllowingStateLoss();
+                        }catch (Exception throwable){
+                            //mUpdateApp.get
+                            ExceptionHandlerHelper.getInstance().onException(throwable);
+                        }
+
                     }
                 }
 

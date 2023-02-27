@@ -1,19 +1,22 @@
-package com.hss01248.update_default.pgyer;
+package com.hss01248.update_pyger;
 
-import android.content.Intent;
-import android.net.Uri;
+import android.app.Activity;
+import android.app.Application;
+import android.content.Context;
+import android.os.Bundle;
 import android.text.TextUtils;
 import android.util.Log;
 
 import androidx.annotation.NonNull;
 
-import com.blankj.utilcode.util.ActivityUtils;
 import com.blankj.utilcode.util.ConvertUtils;
 import com.blankj.utilcode.util.GsonUtils;
+import com.blankj.utilcode.util.ThreadUtils;
+import com.hss01248.appstartup.api.AppStartUpUtil;
+import com.hss01248.appstartup.api.LogAppStartUpCallback;
 import com.hss01248.update_default.UpdateAppDefault;
 import com.vector.update_app.UpdateAppBean;
 
-import org.json.JSONException;
 import org.json.JSONObject;
 
 import java.io.IOException;
@@ -122,5 +125,24 @@ public class UpdateAppPgyer extends UpdateAppDefault {
         Intent intent = new Intent(Intent.ACTION_VIEW, uri);
         ActivityUtils.getTopActivity().startActivity(intent);
         callback.onError("跳到外部浏览器去下载");*/
+    }
+
+
+    @NonNull
+    @Override
+    public String create(@NonNull Context context) {
+        AppStartUpUtil.add(new LogAppStartUpCallback(){
+            @Override
+            public void onFirstActivityCreated(Application app, Activity activity, Bundle savedInstanceState) {
+                super.onFirstActivityCreated(app, activity, savedInstanceState);
+                ThreadUtils.getMainHandler().postDelayed(new Runnable() {
+                    @Override
+                    public void run() {
+                        PygerAppUpdateUtil.doUpdate();
+                    }
+                },1200);
+            }
+        });
+        return "pyger updater";
     }
 }
