@@ -1,12 +1,22 @@
 import groovy.json.JsonSlurper
 
 
-
+// 先从gradle.properties里取,没有再从local.properties里取.
 def apiKey(){
-    return getFromLocalProperties("pyger_api_key")
+    try {
+        return pyger_app_key.toString()
+    }catch(Throwable e){
+        //e.printStackTrace()
+        return getFromLocalProperties("pyger_api_key")
+    }
 }
 def appKey(){
-    return getFromLocalProperties("pyger_app_key")
+    try {
+        return pyger_app_key.toString()
+    }catch(Throwable e){
+        //e.printStackTrace()
+        return getFromLocalProperties("pyger_app_key")
+    }
 }
 
 def getFromLocalProperties(String key){
@@ -24,6 +34,7 @@ def getFromLocalProperties(String key){
         throwable.printStackTrace()
     }
     return null
+
 }
 
 
