@@ -1,23 +1,27 @@
 package com.vector.update_app;
 
 import android.app.Activity;
+import android.app.Dialog;
+import android.app.ProgressDialog;
 import android.content.ComponentName;
 import android.content.Context;
 import android.content.ServiceConnection;
 import android.os.Bundle;
 import android.os.Environment;
 import android.os.IBinder;
+import android.text.TextUtils;
+import android.util.Log;
+
 import androidx.annotation.DrawableRes;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.fragment.app.FragmentActivity;
-import android.text.TextUtils;
-import android.util.Log;
-import android.widget.Toast;
 
 import com.blankj.utilcode.util.ActivityUtils;
 import com.blankj.utilcode.util.AppUtils;
 import com.blankj.utilcode.util.LogUtils;
+import com.blankj.utilcode.util.ThreadUtils;
+import com.blankj.utilcode.util.ToastUtils;
 import com.vector.update_app.listener.ExceptionHandler;
 import com.vector.update_app.listener.ExceptionHandlerHelper;
 import com.vector.update_app.listener.IUpdateDialogFragmentListener;
@@ -60,6 +64,8 @@ public class UpdateAppManager {
     private boolean mShowIgnoreVersion;
     private boolean mDismissNotificationProgress;
     private boolean mOnlyWifi;
+
+    private boolean showLoadingAndToastError;
     //自定义参数
     private IUpdateDialogFragmentListener mUpdateDialogFragmentListener;
 
@@ -67,6 +73,7 @@ public class UpdateAppManager {
         mActivity = builder.getActivity();
         mHttpManager = builder.getHttpManager();
         mUpdateUrl = builder.getUpdateUrl();
+        showLoadingAndToastError = builder.showLoadingAndToastError;
 
         mThemeColor = builder.getThemeColor();
         mTopPic = builder.getTopPic();
@@ -233,11 +240,11 @@ public class UpdateAppManager {
         }
         callback.onBefore();
 
-        if (DownloadService.isRunning || UpdateDialogFragment.isShow) {
+        /*if (DownloadService.isRunning || UpdateDialogFragment.isShow) {
             callback.onAfter();
             Toast.makeText(mActivity, mActivity.getResources().getString(R.string.update_app_is_updating), Toast.LENGTH_SHORT).show();
             return;
-        }
+        }*/
 
         //拼接参数
         Map<String, String> params = new HashMap<String, String>();
@@ -281,9 +288,34 @@ public class UpdateAppManager {
             });
         } else {
             mHttpManager.asyncGet(mUpdateUrl, params, new HttpManager.Callback() {
+                Dialog dialog ;
+
+                @Override
+                public void onStart() {
+                    HttpManager.Callback.super.onStart();
+                    if(showLoadingAndToastError){
+                        ThreadUtils.getMainHandler().post(new Runnable() {
+                            @Override
+                            public void run() {
+                                dialog = new ProgressDialog(ActivityUtils.getTopActivity());
+                                dialog.show();
+                            }
+                        });
+
+                    }
+                }
+
                 @Override
                 public void onResponse(String result) {
                     callback.onAfter();
+                    ThreadUtils.getMainHandler().post(new Runnable() {
+                        @Override
+                        public void run() {
+                           if(dialog != null){
+                               dialog.dismiss();
+                           }
+                        }
+                    });
                     if (result != null) {
                         processData(result, callback);
                     }
@@ -292,6 +324,17 @@ public class UpdateAppManager {
                 @Override
                 public void onError(String error) {
                     callback.onAfter();
+                    ThreadUtils.getMainHandler().post(new Runnable() {
+                        @Override
+                        public void run() {
+                            if(dialog != null){
+                                dialog.dismiss();
+                                if(!TextUtils.isEmpty(error)){
+                                    ToastUtils.showLong(error);
+                                }
+                            }
+                        }
+                    });
                     callback.noNewApp(error);
                 }
             });
@@ -363,6 +406,8 @@ public class UpdateAppManager {
         //必须有
         private String mUpdateUrl;
 
+        private boolean showLoadingAndToastError;
+
         //1，设置按钮，进度条的颜色
         private int mThemeColor = 0;
         //2，顶部的图片
@@ -411,6 +456,11 @@ public class UpdateAppManager {
          */
         public Builder setIgnoreDefParams(boolean ignoreDefParams) {
             this.mIgnoreDefParams = ignoreDefParams;
+            return this;
+        }
+
+        public Builder showLoadingAndToastError(boolean showLoadingAndToastError) {
+            this.showLoadingAndToastError = showLoadingAndToastError;
             return this;
         }
 

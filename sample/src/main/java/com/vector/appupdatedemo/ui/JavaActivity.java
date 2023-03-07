@@ -14,7 +14,9 @@ import android.widget.Toast;
 
 import androidx.appcompat.app.AppCompatActivity;
 
+import com.blankj.utilcode.util.LogUtils;
 import com.hss01248.feedback.FeedbackUtil;
+import com.hss01248.update_default.AppUpdateUtil;
 import com.hss01248.update_default.UpdateAppDefault;
 import com.hss01248.update_pyger.PygerAppUpdateUtil;
 import com.vector.appupdatedemo.R;
@@ -629,5 +631,19 @@ public class JavaActivity extends AppCompatActivity {
 
     public void pygerFeedback(View view) {
         FeedbackUtil.showPygerFeedback("https://www.pgyer.com/YVeW");
+    }
+
+    public void updateMannual(View view) {
+        AppUpdateUtil.updateByClickBtn(mUpdateUrl1);
+    }
+
+    public void checkUpdate(View view) {
+        AppUpdateUtil.checkUpdate(mUpdateUrl1,new UpdateCallback(){
+            @Override
+            protected void hasNewApp(UpdateAppBean updateApp, UpdateAppManager updateAppManager) {
+                super.hasNewApp(updateApp, updateAppManager);
+                LogUtils.w(updateApp);
+            }
+        });
     }
 }

@@ -61,6 +61,7 @@ public class UpdateAppDefault implements HttpManager, Initializer<String> {
 
         Request request = new Request.Builder()
                 .get().url(url).build();
+        callBack.onStart();
         client.newCall(request).enqueue(new okhttp3.Callback() {
             @Override
             public void onFailure(Call call, IOException e) {
@@ -72,7 +73,7 @@ public class UpdateAppDefault implements HttpManager, Initializer<String> {
                 if(response.isSuccessful() && response.body() !=  null){
                     callBack.onResponse(response.body().string());
                 }else {
-                    callBack.onError(response.code()+"-"+response.message());
+                    callBack.onError(response.code()+"\n"+response.message());
                 }
             }
         });
@@ -99,6 +100,7 @@ public class UpdateAppDefault implements HttpManager, Initializer<String> {
                 .post(body)
                 .url(url)
                 .build();
+        callBack.onStart();
         client.newCall(request).enqueue(new okhttp3.Callback() {
             @Override
             public void onFailure(Call call, IOException e) {

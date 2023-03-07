@@ -106,5 +106,23 @@
             android:text="蒲公英-用户反馈"
             />
 
+        <Button
+
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_margin="16dp"
+            android:onClick="updateMannual"
+            android:text="手动点击按钮来更新"
+            />
+
+        <Button
+
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_margin="16dp"
+            android:onClick="checkUpdate"
+            android:text="检查更新"
+            />
+
     </LinearLayout>
 </ScrollView>
