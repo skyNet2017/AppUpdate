@@ -1,6 +1,6 @@
 include ':sample'
 include ':update-app'
-include ':update-app-kotlin'
+//include ':update-app-kotlin'
 include ':http'
 include ':update-default'
 include ':feedback'

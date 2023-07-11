@@ -47,8 +47,8 @@ public class PygerAppUpdateUtil {
                 LogUtils.w(e);
             }
         }
-        FileDownloader.setup(Utils.getApp());
-        UpdateAppManager.setDefaultHttpImpl(new UpdateAppPgyer());
+        //FileDownloader.setup(Utils.getApp());
+        //UpdateAppManager.setDefaultHttpImpl(new UpdateAppPgyer());
         String url = "https://www.pgyer.com/apiv2/app/check?_api_key="+apiKey+"&appKey="+appKey+"&buildVersion="+ AppUtils.getAppVersionCode();
         new UpdateAppManager
                 .Builder()
@@ -57,6 +57,7 @@ public class PygerAppUpdateUtil {
                 //更新地址
                 .setUpdateUrl(url)
                  .handleException(handler)
+                .setHttpManager(new UpdateAppPgyer())
                 //实现httpManager接口的对象
                 //.setHttpManager(new UpdateHttpImpl())
                 .build()

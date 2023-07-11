@@ -24,7 +24,7 @@ public class MainActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
         DrawableUtil.setTextSolidTheme((Button) findViewById(R.id.btn_java), 2, 60, 0xffedd0be);
-        DrawableUtil.setTextSolidTheme((Button) findViewById(R.id.btn_kotlin), 2, 60, 0xffff534d);
+
 
         ImageView im = findViewById(R.id.iv);
 
@@ -55,7 +55,5 @@ public class MainActivity extends AppCompatActivity {
         startActivity(new Intent(this, JavaActivity.class));
     }
 
-    public void updateKotlin(View view) {
-        startActivity(new Intent(this, KotlinActivity.class));
-    }
+
 }

@@ -1,6 +1,5 @@
 apply plugin: 'com.android.application'
-apply plugin: 'kotlin-android-extensions'
-apply plugin: 'kotlin-android'
+
 android {
     compileSdkVersion 32
     buildToolsVersion "30.0.3"
@@ -43,11 +42,11 @@ dependencies {
         exclude group: 'com.android.support', module: 'support-annotations'
     })
     implementation 'androidx.multidex:multidex:2.0.0'
-    compile "org.jetbrains.kotlin:kotlin-stdlib:$kotlin_version"
+
     //org.jetbrains.kotlin:kotlin-stdlib
 
 //    compile project(':update-app')
-    compile project(':update-app-kotlin')
+
     compile project(':http')
 
     compile project(':update-default')

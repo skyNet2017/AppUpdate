@@ -131,6 +131,7 @@ public class UpdateAppPgyer extends UpdateAppDefault {
     @NonNull
     @Override
     public String create(@NonNull Context context) {
+        super.create(context);
         AppStartUpUtil.add(new LogAppStartUpCallback(){
             @Override
             public void onFirstActivityCreated(Application app, Activity activity, Bundle savedInstanceState) {

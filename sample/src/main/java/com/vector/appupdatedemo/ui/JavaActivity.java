@@ -634,7 +634,7 @@ public class JavaActivity extends AppCompatActivity {
     }
 
     public void updateMannual(View view) {
-        AppUpdateUtil.updateByClickBtn(mUpdateUrl1);
+        AppUpdateUtil.updateByClickBtn("http://kodo.hss01248.tech/apk/new_version_ios_test.json");
     }
 
     public void checkUpdate(View view) {
