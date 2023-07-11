@@ -1,6 +1,7 @@
 package com.vector.update_app;
 
-import org.json.JSONObject;
+import com.blankj.utilcode.util.GsonUtils;
+import com.blankj.utilcode.util.LogUtils;
 
 /**
  * 新版本版本检测回调
@@ -16,7 +17,9 @@ public class UpdateCallback {
     protected UpdateAppBean parseJson(String json) {
         UpdateAppBean updateAppBean = new UpdateAppBean();
         try {
-            JSONObject jsonObject = new JSONObject(json);
+            updateAppBean = GsonUtils.fromJson(json, UpdateAppBean.class);
+            updateAppBean.checkAbtestAndReplaceInfo();
+           /* JSONObject jsonObject = new JSONObject(json);
             updateAppBean.setUpdate(jsonObject.optString("update"))
                     //存放json，方便自定义解析
                     .setOriginRes(json)
@@ -26,9 +29,9 @@ public class UpdateCallback {
                     .setTargetSize(jsonObject.optString("target_size"))
                     .setUpdateLog(jsonObject.optString("update_log"))
                     .setConstraint(jsonObject.optBoolean("constraint"))
-                    .setNewMd5(jsonObject.optString("new_md5"));
+                    .setNewMd5(jsonObject.optString("new_md5"));*/
         } catch (Exception e) {
-            e.printStackTrace();
+            LogUtils.w(e);
         }
         return updateAppBean;
     }

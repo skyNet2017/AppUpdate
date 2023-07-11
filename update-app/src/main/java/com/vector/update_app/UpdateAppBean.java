@@ -4,7 +4,12 @@ import android.text.TextUtils;
 
 import androidx.annotation.Keep;
 
+import com.blankj.utilcode.util.AppUtils;
+import com.blankj.utilcode.util.DeviceUtils;
+import com.blankj.utilcode.util.LogUtils;
+
 import java.io.Serializable;
+import java.util.Arrays;
 
 /**
  * 版本信息
@@ -55,6 +60,75 @@ public class UpdateAppBean implements Serializable {
     private boolean delta;
     //服务器端的原生返回数据（json）,方便使用者在hasNewApp自定义渲染dialog的时候可以有别的控制，比如：#issues/59
     private String origin_res;
+
+    /*abtest控制*/
+    private  boolean abtest_on;
+    private  UpdateAppBean abtest_info;
+    private  int abtest_percent;
+
+
+    public void checkAbtestAndReplaceInfo(){
+        boolean hasHitAbtest = hasHitAbtest();
+        if(!hasHitAbtest){
+            return;
+        }
+        UpdateAppBean abtestInfo = abtest_info;
+        this.update = abtestInfo.update;
+        this.update_log = abtestInfo.update_log;
+        this.new_version = abtestInfo.new_version;
+        this.version_code = abtestInfo.version_code;
+        this.apk_file_url = abtestInfo.apk_file_url;
+        this.target_size = abtestInfo.target_size;
+        this.new_md5 = abtestInfo.new_md5;
+        this.constraint = abtestInfo.constraint;
+        this.constraint_if_below = abtestInfo.constraint_if_below;
+
+    }
+    private boolean hasHitAbtest(){
+        if(abtest_on == false){
+            LogUtils.i("abtest_on == false");
+            return false;
+        }
+        if(abtest_info ==null){
+            LogUtils.w("abtest on but abtest info is null!");
+            return false;
+        }
+        if(abtest_info.abtest_percent <=0){
+            LogUtils.w("abtest on but abtest_percent <=0! "+abtest_info.abtest_percent);
+            return false;
+        }
+        String androidID = DeviceUtils.getAndroidID().trim().toLowerCase();
+
+        String c = androidID.substring(androidID.length() - 1);
+
+        //0-9,a-z
+        String[] chars = {"0","1","2","3","4","5","6","7","8","9","a","b","c","d","e","f","g","h","i","j","k","l","m","n",
+        "o","p","q","r","s","t","u","v","w","x","y","z"};
+        int index = -1;
+        for (int i = 0; i < chars.length; i++) {
+            if(c.equals(chars[i])){
+                index = i;
+                break;
+            }
+        }
+        if(index ==-1){
+            LogUtils.w("abtest on but last chat not leagal! "+c);
+            return false;
+        }
+        float max = (chars.length - 1) * abtest_info.abtest_percent / 100f;
+        int maxInt = Math.round(max);
+        LogUtils.i("用于计算命中的AndroidID (最后一位): "+androidID+","+c+",最大:"+maxInt+",对应字母:"+chars[maxInt]+",推量百分比:"+abtest_info.abtest_percent+"%");
+        if(index <= maxInt){
+            LogUtils.i("abtest 命中:  "+c);
+            return true;
+        }else {
+            LogUtils.i("abtest 未命中:  "+c);
+            return false;
+        }
+
+
+    }
+    private  int constraint_if_below;
     /**********以下是内部使用的数据**********/
 
     //网络工具，内部使用
@@ -95,6 +169,11 @@ public class UpdateAppBean implements Serializable {
     }
 
     public boolean isConstraint() {
+        if(constraint_if_below>0){
+            if(AppUtils.getAppVersionCode() < constraint_if_below ){
+                return  true;
+            }
+        }
         return constraint;
     }
 
