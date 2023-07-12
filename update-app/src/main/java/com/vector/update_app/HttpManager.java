@@ -20,6 +20,7 @@ public interface HttpManager extends Serializable {
     void asyncGet(@NonNull String url, @NonNull Map<String, String> params, @NonNull Callback callBack);
 
 
+
     /**
      * 异步post
      *

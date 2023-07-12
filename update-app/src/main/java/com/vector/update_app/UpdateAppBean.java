@@ -66,6 +66,8 @@ public class UpdateAppBean implements Serializable {
     private  UpdateAppBean abtest_info;
     private  int abtest_percent;
 
+    private  boolean abtest_by_uid;
+
 
     public void checkAbtestAndReplaceInfo(){
         boolean hasHitAbtest = hasHitAbtest();
@@ -97,13 +99,28 @@ public class UpdateAppBean implements Serializable {
             LogUtils.w("abtest on but abtest_percent <=0! "+abtest_info.abtest_percent);
             return false;
         }
-        String androidID = DeviceUtils.getAndroidID().trim().toLowerCase();
+        String id = "";
+        String[] chars = null;
+        if(abtest_info.abtest_by_uid && UpdateAppManager.getParam != null){
+            id = UpdateAppManager.getParam.getUid();
+            if(TextUtils.isEmpty(id) || "0".equals(id)){
+                LogUtils.w("未登录,使用AndroidId来随机");
+                id = DeviceUtils.getAndroidID().trim().toLowerCase();
+                chars = new String[]{"0","1","2","3","4","5","6","7","8","9","a","b","c","d","e","f","g","h","i","j","k","l","m","n",
+                        "o","p","q","r","s","t","u","v","w","x","y","z"};
+            }else {
+                chars = new String[]{"0","1","2","3","4","5","6","7","8","9"};
+                LogUtils.d("使用uid来随机: "+ id);
+            }
+        }else {
+            id = DeviceUtils.getAndroidID().trim().toLowerCase();
+            chars = new String[]{"0","1","2","3","4","5","6","7","8","9","a","b","c","d","e","f","g","h","i","j","k","l","m","n",
+                    "o","p","q","r","s","t","u","v","w","x","y","z"};
+            LogUtils.d("使用deviceId来随机: "+ id);
+        }
+        //取最后一个字符
+        String c = id.substring(id.length() - 1);
 
-        String c = androidID.substring(androidID.length() - 1);
-
-        //0-9,a-z
-        String[] chars = {"0","1","2","3","4","5","6","7","8","9","a","b","c","d","e","f","g","h","i","j","k","l","m","n",
-        "o","p","q","r","s","t","u","v","w","x","y","z"};
         int index = -1;
         for (int i = 0; i < chars.length; i++) {
             if(c.equals(chars[i])){
@@ -117,7 +134,7 @@ public class UpdateAppBean implements Serializable {
         }
         float max = (chars.length - 1) * abtest_info.abtest_percent / 100f;
         int maxInt = Math.round(max);
-        LogUtils.i("用于计算命中的AndroidID (最后一位): "+androidID+","+c+",最大:"+maxInt+",对应字母:"+chars[maxInt]+",推量百分比:"+abtest_info.abtest_percent+"%");
+        LogUtils.i("用于计算命中的id (最后一位): "+id+","+c+",最大:"+maxInt+",对应字母:"+chars[maxInt]+",推量百分比:"+abtest_info.abtest_percent+"%");
         if(index <= maxInt){
             LogUtils.i("abtest 命中:  "+c);
             return true;
@@ -125,8 +142,6 @@ public class UpdateAppBean implements Serializable {
             LogUtils.i("abtest 未命中:  "+c);
             return false;
         }
-
-
     }
     private  int constraint_if_below;
     /**********以下是内部使用的数据**********/

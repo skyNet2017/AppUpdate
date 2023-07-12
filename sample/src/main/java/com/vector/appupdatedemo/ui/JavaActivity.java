@@ -24,6 +24,7 @@ import com.vector.appupdatedemo.http.OkGoUpdateHttpUtil;
 import com.vector.appupdatedemo.http.UpdateAppHttpUtil;
 import com.vector.appupdatedemo.util.CProgressDialogUtils;
 import com.vector.appupdatedemo.util.HProgressDialogUtils;
+import com.vector.update_app.IGetParam;
 import com.vector.update_app.SilenceUpdateCallback;
 import com.vector.update_app.UpdateAppBean;
 import com.vector.update_app.UpdateAppManager;
@@ -634,6 +635,12 @@ public class JavaActivity extends AppCompatActivity {
     }
 
     public void updateMannual(View view) {
+        AppUpdateUtil.config(new IGetParam() {
+            @Override
+            public String getUid() {
+                return "89767778869";
+            }
+        });
         AppUpdateUtil.updateByClickBtn("http://kodo.hss01248.tech/apk/new_version_ios_test.json");
     }
 

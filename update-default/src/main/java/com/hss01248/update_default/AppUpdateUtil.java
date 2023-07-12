@@ -1,6 +1,7 @@
 package com.hss01248.update_default;
 
 
+import com.vector.update_app.IGetParam;
 import com.vector.update_app.UpdateAppManager;
 import com.vector.update_app.UpdateCallback;
 import com.vector.update_app.listener.ExceptionHandler;
@@ -14,6 +15,9 @@ import com.vector.update_app.listener.ExceptionHandler;
 public class AppUpdateUtil {
 
 
+    public static void config(IGetParam getParam){
+        UpdateAppManager.setGetParam(getParam);
+    }
 
     public static void doUpdate(String url,ExceptionHandler handler){
         new UpdateAppManager

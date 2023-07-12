@@ -46,6 +46,12 @@ public class UpdateAppManager {
     }
 
     static HttpManager defaultHttpImpl;
+
+    public static void setGetParam(IGetParam getParam) {
+        UpdateAppManager.getParam = getParam;
+    }
+
+    static IGetParam getParam;
     private Map<String, String> mParams;
     // 是否忽略默认参数，解决
     private boolean mIgnoreDefParams = false;
