@@ -12,4 +12,5 @@
     <string name="update_ignore_this_version">abaikan versi ini</string>
     <string name="update_new_version_size">ukuran versi baru：</string>
     <string name="update_to_version_desc">Apakah akan meningkatkan ke versi %s?</string>
+    <string name="update_do_intall">Install</string>
 </resources>

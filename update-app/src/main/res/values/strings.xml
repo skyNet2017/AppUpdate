@@ -12,4 +12,5 @@
     <string name="update_ignore_this_version">ignore this version</string>
     <string name="update_to_version_desc">update to version %s?</string>
     <string name="update_new_version_size">new version size：</string>
+    <string name="update_do_intall">install</string>
 </resources>
