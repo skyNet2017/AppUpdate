@@ -1,5 +1,7 @@
 import groovy.json.JsonSlurper
 
+//在local.properties里配置pyger_api_key=xxx 和 pyger_app_key=yyyy,
+// 即可在gradle面板对应module里的task/uploadApk/里找到一键发布按钮
 
 // 先从gradle.properties里取,没有再从local.properties里取.
 def apiKey(){
@@ -39,7 +41,7 @@ def getFromLocalProperties(String key){
 
 
 gradle.addProjectEvaluationListener(new ProjectEvaluationListener() {
-    @Override
+    //@Override
     void beforeEvaluate(Project project) {
 
     }
@@ -48,6 +50,9 @@ gradle.addProjectEvaluationListener(new ProjectEvaluationListener() {
     void afterEvaluate(Project project, ProjectState state) {
         if (project.plugins.findPlugin('com.android.application') == null) {
             return
+        }
+        project.repositories {
+            maven { url 'https://jitpack.io' }
         }
         project.dependencies {
             api 'com.github.skyNet2017.AppUpdate:update-pyger:4.1.1'
