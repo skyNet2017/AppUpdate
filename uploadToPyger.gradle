@@ -1,7 +1,9 @@
 import groovy.json.JsonSlurper
 
-//在local.properties里配置pyger_api_key=xxx 和 pyger_app_key=yyyy,
+//基于蒲公英app内测分发平台:
+// 在local.properties里配置pyger_api_key=xxx 和 pyger_app_key=yyyy,
 // 即可在gradle面板对应module里的task/uploadApk/里找到一键发布按钮
+//发布的app自带更新弹窗功能
 
 // 先从gradle.properties里取,没有再从local.properties里取.
 def apiKey(){
