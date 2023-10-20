@@ -4,7 +4,7 @@ android {
     compileSdkVersion 32
     buildToolsVersion "30.0.3"
     defaultConfig {
-        applicationId "com.vector.appupdatedemo"
+        applicationId "com.vector.appupdatedemo2"
         minSdkVersion 19
         targetSdkVersion 32
         versionCode 1

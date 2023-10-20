@@ -37,15 +37,35 @@ public class PygerAppUpdateUtil {
      */
     public static void doUpdate(@Nullable String apiKey,@Nullable  String appKey, ExceptionHandler handler){
         if(TextUtils.isEmpty(apiKey) || TextUtils.isEmpty(appKey)){
-
+            Class reflect = null;
             try {
-                Class reflect = Class.forName(AppUtils.getAppPackageName() + ".BuildConfig");
-               apiKey = (String) reflect.getDeclaredField("pyger_api_key").get(reflect);
+                 reflect = Class.forName(AppUtils.getAppPackageName() + ".BuildConfig");
+
+            } catch (ClassNotFoundException e) {
+                LogUtils.i(e);
+                String path = Utils.getApp().getClass().getName();
+                LogUtils.i("application class path: "+path);
+                path = path.substring(0,path.lastIndexOf("."));
+                try {
+                    reflect =   Class.forName(path + ".BuildConfig");
+                } catch (ClassNotFoundException ex) {
+                    LogUtils.w(ex);
+                }
+            }
+            if(reflect == null){
+                LogUtils.w("没有找到BuildConfig,拿不到蒲公英的key,无法发起更新请求");
+                return;
+            }
+            try {
+                apiKey = (String) reflect.getDeclaredField("pyger_api_key").get(reflect);
                 appKey = (String) reflect.getDeclaredField("pyger_app_key").get(reflect);
                 LogUtils.i("get api_key and app_key : "+ apiKey+"->"+appKey);
-            } catch (Exception e) {
-                LogUtils.w(e);
+            } catch (Throwable e) {
+                LogUtils.i("app更新->没有配置相关key",e);
+                //return;
             }
+
+
         }
         //FileDownloader.setup(Utils.getApp());
         //UpdateAppManager.setDefaultHttpImpl(new UpdateAppPgyer());
