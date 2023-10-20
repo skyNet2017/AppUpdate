@@ -57,7 +57,7 @@ gradle.addProjectEvaluationListener(new ProjectEvaluationListener() {
             maven { url 'https://jitpack.io' }
         }
         project.dependencies {
-            api 'com.github.skyNet2017.AppUpdate:update-pyger:4.1.1'
+            api 'com.github.skyNet2017.AppUpdate:update-pyger:4.1.4'
         }
         project.android{
             buildTypes.each{
