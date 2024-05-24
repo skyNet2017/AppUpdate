@@ -78,7 +78,8 @@ gradle.addProjectEvaluationListener(new ProjectEvaluationListener() {
 def uploadApk(boolean isRelease,Project porject) {
     //查找上传的apk文件
 
-    def curPath =System.getProperty("user.dir") ;
+    //def curPath =System.getProperty("user.dir")
+    def curPath =porject.projectDir ;
     println "curPath:"+curPath;
     def apkPath = ""
     if (isRelease) {
