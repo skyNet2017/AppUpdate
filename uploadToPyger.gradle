@@ -210,22 +210,6 @@ static def getGitVersionInfo() {
     return log
 }
 
-//打包测试环境apk 上传蒲公英 发送邮件功能使用蒲公英自带的邮件功能
-task uploadReleaseApk(group: "upload") {
-    dependsOn("assembleRelease")
-
-    doLast {
-        uploadApk(true)
-    }
-}
-
-//打包测试环境apk 上传蒲公英 发送邮件功能使用蒲公英自带的邮件功能
-task uploadDebugApk(group: "upload") {
-    dependsOn("assembleDebug")
-    doLast {
-        uploadApk(false)
-    }
-}
 
 rootProject.subprojects.each { project ->
     project.afterEvaluate{
