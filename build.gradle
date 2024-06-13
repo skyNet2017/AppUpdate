@@ -2,9 +2,9 @@
 
 buildscript {
     try {
-        apply from: 'https://raw.githubusercontent.com/hss01248/flipperUtil/master/deps/depsLastestChecker.gradle'
-        apply from: 'https://raw.githubusercontent.com/hss01248/flipperUtil/dev/remote3.gradle'
-        apply from: 'https://raw.githubusercontent.com/hss01248/flipperUtil/dev/deps/uploadAllTask.gradle'
+        //apply from: 'https://raw.githubusercontent.com/hss01248/flipperUtil/gradle7_5/deps/depsLastestChecker.gradle'
+        apply from: 'https://raw.githubusercontent.com/hss01248/flipperUtil/gradle7_5/remote3.gradle'
+        //apply from: 'https://raw.githubusercontent.com/hss01248/flipperUtil/gradle7_5/deps/uploadAllTask.gradle'
     }catch(Throwable throwable){
         throwable.printStackTrace()
     }
@@ -27,7 +27,7 @@ buildscript {
         }
     }
     dependencies {
-        classpath 'com.android.tools.build:gradle:4.1.0'
+        classpath 'com.android.tools.build:gradle:7.1.2'
         classpath "com.novoda:bintray-release:$novoda_version"
         classpath "org.jetbrains.kotlin:kotlin-gradle-plugin:$kotlin_version"
         // NOTE: Do not place your application dependencies here; they belong

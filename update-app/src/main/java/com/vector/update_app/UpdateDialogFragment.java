@@ -35,7 +35,7 @@ import com.vector.update_app.service.DownloadService;
 import com.vector.update_app.utils.AppUpdateUtils;
 import com.vector.update_app.utils.ColorUtil;
 import com.vector.update_app.utils.DrawableUtil;
-import com.vector.update_app.view.NumberProgressBar;
+import com.daimajia.numberprogressbar.NumberProgressBar;
 
 import java.io.File;
 
