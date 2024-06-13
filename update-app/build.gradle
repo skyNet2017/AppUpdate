@@ -39,6 +39,7 @@ dependencies {
     api 'com.github.hss01248.StartActivityResult:activityresult:1.1.6'
     api 'com.blankj:utilcodex:1.30.0'
     api "com.google.code.gson:gson:2.8.6"
+    api 'com.github.skyNet2017.NumberProgressBar:library:1.0.2'
 }
 
 //添加
