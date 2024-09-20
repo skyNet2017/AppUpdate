@@ -33,10 +33,11 @@ dependencies {
     androidTestImplementation 'androidx.test.ext:junit:1.1.4'
     androidTestImplementation 'androidx.test.espresso:espresso-core:3.5.0'
     api project(':update-app')
-    api 'com.liulishuo.filedownloader:library:1.7.7'
+    //api 'com.liulishuo.filedownloader:library:1.7.7'
     api "androidx.startup:startup-runtime:1.1.0"
     api "com.squareup.okhttp3:logging-interceptor:3.12.12"
     api "com.squareup.okhttp3:okhttp:3.12.12"
     api "com.google.code.gson:gson:2.8.6"
     api "com.github.hss01248.AppStartUp:startup-api:1.1.0"
+    api "com.github.hss01248.simple-file-downloder:download-okhttp-android:1.0.7"
 }

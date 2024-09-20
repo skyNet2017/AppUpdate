@@ -3,14 +3,14 @@
 buildscript {
     try {
         //apply from: 'https://raw.githubusercontent.com/hss01248/flipperUtil/gradle7_5/deps/depsLastestChecker.gradle'
-        apply from: 'https://raw.githubusercontent.com/hss01248/flipperUtil/gradle7_5/remote3.gradle'
+        //apply from: 'https://raw.githubusercontent.com/hss01248/flipperUtil/gradle7_5/remote3.gradle'
         //apply from: 'https://raw.githubusercontent.com/hss01248/flipperUtil/gradle7_5/deps/uploadAllTask.gradle'
     }catch(Throwable throwable){
         throwable.printStackTrace()
     }
     apply from:'uploadToPyger.gradle'
     ext{
-        groupId='com.github.skyNet2017.AppUpdate'
+        //groupId='com.github.skyNet2017.AppUpdate'
         versionCode = '2.0.00'
         isPublisToLocal=true
     }
@@ -19,12 +19,12 @@ buildscript {
     ext.kotlin_version = '1.6.21'//1.6.21
     ext.novoda_version = '0.4.0'
     repositories {
-        jcenter()
-
-        maven {
-            url 'https://maven.google.com/'
-            name 'Google'
-        }
+        mavenLocal()
+        mavenCentral()
+        google()
+        maven { url 'https://jitpack.io' }
+        maven { url 'https://maven.aliyun.com/repository/jcenter' }
+        maven { url 'https://nexus.hss01248.tech/repository/maven-releases/' }
     }
     dependencies {
         classpath 'com.android.tools.build:gradle:7.1.2'
@@ -36,16 +36,12 @@ buildscript {
 }
 allprojects {
     repositories {
-        jcenter()
+        mavenLocal()
         mavenCentral()
-
-//        maven{url 'https://dl.bintray.com/qianwen/maven/'}
-        maven { url "https://www.jitpack.io" }
+        google()
+        maven { url 'https://jitpack.io' }
+        maven { url 'https://maven.aliyun.com/repository/jcenter' }
         maven { url 'https://nexus.hss01248.tech/repository/maven-releases/' }
-        maven {
-            url 'https://maven.google.com/'
-            name 'Google'
-        }
         maven { url 'https://github.com/link-u/AndroidGlideAvifDecoder/raw/master/repository' }
     }
     tasks.withType(Javadoc) {

@@ -8,7 +8,6 @@ import androidx.annotation.Nullable;
 import com.blankj.utilcode.util.AppUtils;
 import com.blankj.utilcode.util.LogUtils;
 import com.blankj.utilcode.util.Utils;
-import com.liulishuo.filedownloader.FileDownloader;
 import com.vector.update_app.UpdateAppManager;
 import com.vector.update_app.listener.ExceptionHandler;
 

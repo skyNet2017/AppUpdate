@@ -6,9 +6,10 @@ import androidx.annotation.NonNull;
 import androidx.startup.Initializer;
 
 import com.google.gson.Gson;
-import com.liulishuo.filedownloader.BaseDownloadTask;
-import com.liulishuo.filedownloader.FileDownloadSampleListener;
-import com.liulishuo.filedownloader.FileDownloader;
+
+import com.hss01248.download_okhttp.IDownloadCallback;
+import com.liulishuo.filedownloader2.AndroidDownloader;
+import com.liulishuo.filedownloader2.DownloadCallbackOnMainThreadWrapper;
 import com.vector.update_app.HttpManager;
 import com.vector.update_app.UpdateAppManager;
 
@@ -130,7 +131,37 @@ public class UpdateAppDefault implements HttpManager, Initializer<String> {
     @Override
     public void download(@NonNull String url, @NonNull String path, @NonNull String fileName, @NonNull final FileCallback callback) {
         File file = new File(path,fileName);
-        FileDownloader.getImpl().create(url)
+        AndroidDownloader.prepareDownload(url)
+                        .filePath(file.getAbsolutePath())
+                        .forceRedownload(false)
+                        .start(new DownloadCallbackOnMainThreadWrapper(new IDownloadCallback() {
+                            @Override
+                            public void onCodeStart(String url, String path) {
+                                IDownloadCallback.super.onCodeStart(url, path);
+                                callback.onBefore();
+                            }
+
+                            @Override
+                            public void onSuccess(String url, String path) {
+                                callback.onResponse(new File(path));
+                            }
+
+                            @Override
+                            public void onFailed(String url, String path, String code, String msg, Throwable e) {
+                                callback.onError(code + " "+ msg);
+                            }
+
+                            @Override
+                            public void onProgress(String url, String path, long total, long alreadyReceived, long speed) {
+                                IDownloadCallback.super.onProgress(url, path, total, alreadyReceived, speed);
+                                float progress = 0f;
+                                if(total != 0){
+                                    progress = alreadyReceived*1f/total;
+                                }
+                                callback.onProgress(progress,total);
+                            }
+                        }));
+/*        FileDownloader.getImpl().create(url)
                 .setPath(file.getAbsolutePath())
                 //1M以上,需要wifi才下载
                 .setWifiRequired(false)
@@ -166,14 +197,13 @@ public class UpdateAppDefault implements HttpManager, Initializer<String> {
                         callback.onError(e.getMessage());
                     }
                 })
-                .start();
+                .start();*/
     }
 
     @NonNull
     @Override
     public String create(@NonNull Context context) {
         UpdateAppManager.setDefaultHttpImpl(new UpdateAppDefault());
-        FileDownloader.setup(context);
         return "updateBy all";
     }
 
