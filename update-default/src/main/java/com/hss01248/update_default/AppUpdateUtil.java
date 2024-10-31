@@ -19,6 +19,10 @@ public class AppUpdateUtil {
         UpdateAppManager.setGetParam(getParam);
     }
 
+    public static void setGuideToGooglePlay(boolean guideToGooglePlay) {
+        UpdateAppManager.setGuideToGooglePlay(guideToGooglePlay);
+    }
+
     public static void doUpdate(String url,ExceptionHandler handler){
         new UpdateAppManager
                 .Builder()

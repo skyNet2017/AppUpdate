@@ -6,6 +6,7 @@ import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.ServiceConnection;
 import android.graphics.Color;
+import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.IBinder;
@@ -27,6 +28,8 @@ import androidx.annotation.Nullable;
 import androidx.fragment.app.DialogFragment;
 import androidx.fragment.app.FragmentManager;
 
+import com.blankj.utilcode.util.AppUtils;
+import com.blankj.utilcode.util.LogUtils;
 import com.blankj.utilcode.util.ToastUtils;
 import com.vector.update_app.listener.ExceptionHandler;
 import com.vector.update_app.listener.ExceptionHandlerHelper;
@@ -325,6 +328,12 @@ public class UpdateDialogFragment extends DialogFragment implements View.OnClick
     }
 
     private void installApp() {
+        if(UpdateAppManager.isGuideToGooglePlay()){
+           boolean success =  guideToGooglePlay();
+           if(success){
+               return;
+           }
+        }
         if (AppUpdateUtils.appHasDownloaded(mUpdateApp)) {
             AppUpdateUtils.checkAndInstallApk( AppUpdateUtils.getAppFile(mUpdateApp));
             //安装完自杀
@@ -341,6 +350,22 @@ public class UpdateDialogFragment extends DialogFragment implements View.OnClick
                 dismiss();
             }
 
+        }
+    }
+
+    private boolean guideToGooglePlay() {
+        try {
+            String appPkg = AppUtils.getAppPackageName();
+            if (TextUtils.isEmpty(appPkg)) return false;
+            Uri uri = Uri.parse("market://details?id=" + appPkg);
+            Intent intent = new Intent(Intent.ACTION_VIEW, uri);
+            intent.setPackage("com.android.vending"); // 设置Google Play的包名，直接跳转到Google Play
+            intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+            startActivity(intent);
+            return true;
+        } catch (Exception e) {
+            LogUtils.w(e);
+            return false;
         }
     }
 

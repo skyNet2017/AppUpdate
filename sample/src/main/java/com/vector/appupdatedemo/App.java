@@ -4,6 +4,7 @@ import android.app.Application;
 
 import androidx.multidex.MultiDexApplication;
 
+import com.hss01248.update_default.AppUpdateUtil;
 import com.lzy.okgo.OkGo;
 import com.zhy.http.okhttp.OkHttpUtils;
 
@@ -23,7 +24,7 @@ public class App extends MultiDexApplication {
                 .debug(true, "okHttp")
                 .timeout(20 * 1000);
 
-
+        AppUpdateUtil.setGuideToGooglePlay(true);
         OkGo.getInstance().init(this);
     }
 }

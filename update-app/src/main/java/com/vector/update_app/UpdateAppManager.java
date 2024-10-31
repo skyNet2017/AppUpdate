@@ -35,6 +35,16 @@ import java.util.Map;
  * 版本更新管理器
  */
 public class UpdateAppManager {
+
+    public static boolean isGuideToGooglePlay() {
+        return guideToGooglePlay;
+    }
+
+    public static void setGuideToGooglePlay(boolean guideToGooglePlay) {
+        UpdateAppManager.guideToGooglePlay = guideToGooglePlay;
+    }
+
+    static  boolean guideToGooglePlay;
     final static String INTENT_KEY = "update_dialog_values";
     final static String THEME_KEY = "theme_color";
     final static String TOP_IMAGE_KEY = "top_resId";

@@ -2,6 +2,7 @@ package com.vector.update_app;
 
 import com.blankj.utilcode.util.GsonUtils;
 import com.blankj.utilcode.util.LogUtils;
+import com.blankj.utilcode.util.ThreadUtils;
 
 /**
  * 新版本版本检测回调
@@ -43,7 +44,18 @@ public class UpdateCallback {
      * @param updateAppManager app更新管理器
      */
     protected void hasNewApp(UpdateAppBean updateApp, UpdateAppManager updateAppManager) {
-        updateAppManager.showDialogFragment();
+        ThreadUtils.getMainHandler().post(new Runnable() {
+            @Override
+            public void run() {
+                try {
+                    updateAppManager.showDialogFragment();
+                }catch (Throwable throwable){
+                    LogUtils.w(throwable);
+                }
+
+            }
+        });
+
     }
 
     /**
