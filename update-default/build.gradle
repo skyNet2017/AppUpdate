@@ -39,5 +39,5 @@ dependencies {
     api "com.squareup.okhttp3:okhttp:3.12.12"
     api "com.google.code.gson:gson:2.8.6"
     api "com.github.hss01248.AppStartUp:startup-api:1.1.0"
-    api "com.github.hss01248.simple-file-downloder:download-okhttp-android:1.0.7"
+    api "com.github.hss01248.simple-file-downloder:download-okhttp-android:1.0.9"
 }
