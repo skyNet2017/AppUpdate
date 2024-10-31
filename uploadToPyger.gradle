@@ -58,7 +58,7 @@ gradle.addProjectEvaluationListener(new ProjectEvaluationListener() {
             maven { url 'https://nexus.hss01248.tech/repository/maven-releases/' }
         }
         project.dependencies {
-            api 'com.github.skyNet2017.AppUpdate:update-pyger:4.1.5'
+            api 'com.github.skyNet2017.AppUpdate:update-pyger:4.1.6'
         }
         project.android{
             buildTypes.each{
