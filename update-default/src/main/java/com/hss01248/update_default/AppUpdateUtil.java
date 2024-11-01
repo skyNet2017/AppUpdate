@@ -27,18 +27,25 @@ public class AppUpdateUtil {
         UpdateAppManager.setDownloadByBrowser(downloadByBrowser);
     }
 
-    public static void doUpdate(String url,ExceptionHandler handler){
+    public static void doUpdate(String url,boolean fromAppStart){
         new UpdateAppManager
                 .Builder()
+                .setFromAppStart(fromAppStart)
+                .showLoadingAndToastError(!fromAppStart)
                 //当前Activity
                 // .setActivity(this)
                 //更新地址
                 .setUpdateUrl(url)
-                 .handleException(handler)
+                .handleException(null)
                 //实现httpManager接口的对象
                 //.setHttpManager(new UpdateHttpImpl())
                 .build()
                 .update();
+    }
+
+
+    public static void doUpdate(String url,ExceptionHandler handler){
+        doUpdate(url,true);
     }
 
     public static void updateByClickBtn(String url){
@@ -49,6 +56,7 @@ public class AppUpdateUtil {
                 //更新地址
                 .setUpdateUrl(url)
                 .showLoadingAndToastError(true)
+                .setFromAppStart(false)
                 //.handleException(new )
                 //实现httpManager接口的对象
                 //.setHttpManager(new UpdateHttpImpl())
@@ -63,6 +71,8 @@ public class AppUpdateUtil {
                 // .setActivity(this)
                 //更新地址
                 .setUpdateUrl(url)
+                .showLoadingAndToastError(false)
+                .setFromAppStart(false)
                 //.showLoadingAndToastError(true)
                 //.handleException(new )
                 //实现httpManager接口的对象

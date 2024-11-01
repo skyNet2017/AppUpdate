@@ -61,6 +61,13 @@ public class UpdateAppBean implements Serializable {
     private String target_size;
     //是否强制更新
     private boolean constraint;
+
+    public boolean isShowDialogWhenAppStart() {
+        return show_dialog_when_app_start;
+    }
+
+    //app启动时检测到更新后弹窗. 如果false,则只在设置页面显示红点
+    private boolean show_dialog_when_app_start = true;
     //md5
     private String new_md5;
     //是否增量 暂时不用

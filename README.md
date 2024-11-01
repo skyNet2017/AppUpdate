@@ -1,9 +1,168 @@
 
 ## Android 版本更新
 
+# 更新策略: abtest功能支持
+
+目前实现的是位于客户端的abtest.
+
+支持根据uid来random和根据deviceId(AndroidId)来random.
+
+对应的json配置文件:
+
+```json
+{
+  "update": "Yes",
+  "new_version": "1.1.00",
+  "version_code":2000,
+  "app_store_id": "jufjj89",
+  "app_store_link": "http://kodo.hss01248.tech/ai/app-release.apk",
+  "apk_file_url": "http://kodo.hss01248.tech/ai/app-release.apk",
+  "file_url_mac": "http://kodo.hss01248.tech/ai/MyChatAI-release.dmg",
+  "file_url_win": "http://kodo.hss01248.tech/ai/MyChatAI-release.exe",
+  "file_url_ios": "http://kodo.hss01248.tech/ai/MyChatAI-release.dpa",
+  "update_log": "1. android webview优化,可录音 \r\n",
+  "target_size": "25M",
+  "show_dialog_when_app_start":false,
+  "new_md5":"",
+  "constraint": false,
+  "constraint_if_below": 1,
+  "abtest_on":true,
+  "abtest_info":{
+  	"abtest_percent": 90,
+    "abtest_by_uid": true,
+    "update": "Yes",
+    "new_version": "2.1.00",
+    "version_code":2100,
+    "app_store_id": "jufjj89",
+    "app_store_link": "http://kodo.hss01248.tech/ai/app-release.apk",
+    "apk_file_url": "http://kodo.hss01248.tech/ai/app-release.apk",
+    "file_url_mac": "http://kodo.hss01248.tech/ai/MyChatAI-release.dmg",
+    "file_url_win": "http://kodo.hss01248.tech/ai/MyChatAI-release.exe",
+    "file_url_ios": "http://kodo.hss01248.tech/ai/MyChatAI-release.dpa",
+    "update_log": "1. android webview优化,可录音abtest \r\n",
+    "target_size": "26M",
+    "show_dialog_when_app_start":true,
+    "new_md5":"",
+    "constraint": true,
+    "constraint_if_below": 0
+  }
+}
+```
+
+
+
+# 更新策略:弹窗or红点
+
+```java
+    //app启动时检测到更新后弹窗. 如果false,则只在设置页面显示红点
+    private boolean show_dialog_when_app_start = true;
+```
+
+
+
+
+
+# 策略
+
+检查到更新后,可配置跳转到谷歌商店/外部浏览器打开/app内下载
+
+```java
+ AppUpdateUtil.setGuideToGooglePlay(true);
+ AppUpdateUtil.setDownloadByBrowser(true);
+```
+
+其中内部有更细致的判断:
+
+```java
+    public static void setGuideToGooglePlay(boolean guideToGooglePlay) {
+        UpdateAppManager.guideToGooglePlay = guideToGooglePlay;
+        if(guideToGooglePlay){
+            //检查包名是否存在:
+            String url = "https://play.google.com/store/apps/details?id="+AppUtils.getAppPackageName();
+            
+            defaultHttpImpl.asyncGet(url, new HashMap<>(), new HttpManager.Callback() {
+                @Override
+                public void onResponse(String result) {
+
+                }
+
+                @Override
+                public void onError(String error) {
+                    if(!TextUtils.isEmpty(error)){
+                        if(error.startsWith("404")){
+                          //404代表不存在,还没有上架
+                            UpdateAppManager.guideToGooglePlay = false;
+                        }
+                    }
+                  //网络不通,也不跳谷歌商店
+                    UpdateAppManager.guideToGooglePlay = false;
+                }
+            });
+
+        }
+    }
+```
+
+
+
+```java
+public static boolean isDownloadByBrowser() {
+
+        if(downloadByBrowser){
+            return true;
+        }
+        if(isPermissionDeclared(Utils.getApp(), Manifest.permission.REQUEST_INSTALL_PACKAGES)){
+            return false;
+        }
+        //如果没有声明安装权限,那么不管外面怎么设置,都跳到外部浏览器去下载
+        return true;
+    }
+```
+
+
+
+点击下载/按钮的逻辑:
+
+```java
+    private void installApp() {
+        if(UpdateAppManager.isGuideToGooglePlay()){
+           boolean success =  guideToGooglePlay();
+           if(success){
+               return;
+           }
+        }
+
+        //跳到浏览器去下载:
+        if(UpdateAppManager.isDownloadByBrowser()){
+            String url = mUpdateApp.getApkFileUrl();
+            openUrl(url);
+            return;
+        }
+
+        if (AppUpdateUtils.appHasDownloaded(mUpdateApp)) {
+            AppUpdateUtils.checkAndInstallApk( AppUpdateUtils.getAppFile(mUpdateApp));
+            //安装完自杀
+            //如果上次是强制更新，但是用户在下载完，强制杀掉后台，重新启动app后，则会走到这一步，所以要进行强制更新的判断。
+            if (!mUpdateApp.isConstraint()) {
+                dismiss();
+            } else {
+                showInstallBtn(AppUpdateUtils.getAppFile(mUpdateApp));
+            }
+        } else {
+            downloadApp();
+            //这里的隐藏对话框会和强制更新冲突，导致强制更新失效，所以当强制更新时，不隐藏对话框。
+            if (mUpdateApp.isHideDialog() && !mUpdateApp.isConstraint()) {
+                dismiss();
+            }
+        }
+    }
+```
+
+
+
 # 服务端
 
-直接使用github的文件存储功能.
+### 直接使用github的文件存储功能.
 
 https://raw.githubusercontent.com/WVector/AppUpdateDemo/master/json/json.txt
 
@@ -23,6 +182,35 @@ https://raw.githubusercontent.com/WVector/AppUpdateDemo/master/json/json.txt
 ```
 
 apk也直接放github上,国内可以通过jsdeliver来访问
+
+
+
+### 也可使用蒲公英的发布和版本管理功能:
+
+```groovy
+api 'com.github.skyNet2017.AppUpdate:update-pyger:4.1.8'
+```
+
+一键发布和更新脚本:
+
+```groovy
+buildscript {
+    apply from:'https://raw.githubusercontent.com/skyNet2017/AppUpdate/master/uploadToPyger.gradle?a=3'
+}
+```
+
+Local.properties里配置:
+
+```properties
+pyger_api_key=xxxx
+pyger_app_key=yyyy
+```
+
+那么,在Android studio的gradle面板里运行对应的uploadApk命令即可:
+
+该工程的应用module也会自动带有app更新功能.
+
+![image-20241101143533073](https://cdn.jsdelivr.net/gh/shuiniuhss/myimages@main/imagemac3/image-20241101143533073.png)
 
 
 

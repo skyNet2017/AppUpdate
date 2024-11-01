@@ -72,6 +72,12 @@ public class UpdateAppManager {
 
     static  boolean guideToGooglePlay;
 
+    public static boolean hasNewVersion() {
+        return hasNewVersion;
+    }
+
+    static boolean hasNewVersion;
+
     public static boolean isDownloadByBrowser() {
 
         if(downloadByBrowser){
@@ -147,12 +153,13 @@ public class UpdateAppManager {
     private boolean showLoadingAndToastError;
     //自定义参数
     private IUpdateDialogFragmentListener mUpdateDialogFragmentListener;
-
+    private boolean fromAppStart;
     private UpdateAppManager(Builder builder) {
         mActivity = builder.getActivity();
         mHttpManager = builder.getHttpManager();
         mUpdateUrl = builder.getUpdateUrl();
         showLoadingAndToastError = builder.showLoadingAndToastError;
+        fromAppStart = builder.fromAppStart;
 
         mThemeColor = builder.getThemeColor();
         mTopPic = builder.getTopPic();
@@ -263,6 +270,7 @@ public class UpdateAppManager {
         return mUpdateApp == null;
     }
 
+
     /**
      * 跳转到更新页面
      */
@@ -270,6 +278,11 @@ public class UpdateAppManager {
 
         //校验
         if (notUpdate()) return;
+        hasNewVersion = true;
+        if(!mUpdateApp.isShowDialogWhenAppStart() && fromAppStart){
+            LogUtils.d("配置了不在app启动时显示");
+            return;
+        }
 
         if (mActivity != null && !mActivity.isFinishing()) {
             Bundle bundle = new Bundle();
@@ -508,6 +521,13 @@ public class UpdateAppManager {
         private boolean mShowIgnoreVersion;
         private boolean dismissNotificationProgress;
         private boolean mOnlyWifi;
+
+        public Builder setFromAppStart(boolean fromAppStart) {
+            this.fromAppStart = fromAppStart;
+            return this;
+        }
+
+        private boolean fromAppStart;
         private IUpdateDialogFragmentListener mUpdateDialogFragmentListener;
 
         public Map<String, String> getParams() {

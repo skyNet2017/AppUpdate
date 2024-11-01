@@ -357,7 +357,6 @@ public class UpdateDialogFragment extends DialogFragment implements View.OnClick
             if (mUpdateApp.isHideDialog() && !mUpdateApp.isConstraint()) {
                 dismiss();
             }
-
         }
     }
 
