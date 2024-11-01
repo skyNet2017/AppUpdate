@@ -23,6 +23,10 @@ public class AppUpdateUtil {
         UpdateAppManager.setGuideToGooglePlay(guideToGooglePlay);
     }
 
+    public static void setDownloadByBrowser(boolean downloadByBrowser) {
+        UpdateAppManager.setDownloadByBrowser(downloadByBrowser);
+    }
+
     public static void doUpdate(String url,ExceptionHandler handler){
         new UpdateAppManager
                 .Builder()

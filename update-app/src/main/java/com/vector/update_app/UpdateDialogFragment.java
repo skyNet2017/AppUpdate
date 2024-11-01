@@ -334,6 +334,14 @@ public class UpdateDialogFragment extends DialogFragment implements View.OnClick
                return;
            }
         }
+
+        //跳到浏览器去下载:
+        if(UpdateAppManager.isDownloadByBrowser()){
+            String url = mUpdateApp.getApkFileUrl();
+            openUrl(url);
+            return;
+        }
+
         if (AppUpdateUtils.appHasDownloaded(mUpdateApp)) {
             AppUpdateUtils.checkAndInstallApk( AppUpdateUtils.getAppFile(mUpdateApp));
             //安装完自杀
@@ -350,6 +358,22 @@ public class UpdateDialogFragment extends DialogFragment implements View.OnClick
                 dismiss();
             }
 
+        }
+    }
+
+    private boolean openUrl(String urlString) {
+        try {
+            // 创建一个Intent，设置动作为Intent.ACTION_VIEW
+            Intent intent = new Intent(Intent.ACTION_VIEW);
+            // 设置数据和类型
+            intent.setData(Uri.parse(urlString));
+            // 启动Intent
+            startActivity(intent);
+            return true;
+        } catch (Exception e) {
+            // 没有应用可以处理这个Intent时，可以在这里处理异常
+            LogUtils.w(e);
+            return false;
         }
     }
 

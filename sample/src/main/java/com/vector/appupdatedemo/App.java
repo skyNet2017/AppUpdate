@@ -24,7 +24,8 @@ public class App extends MultiDexApplication {
                 .debug(true, "okHttp")
                 .timeout(20 * 1000);
 
-        AppUpdateUtil.setGuideToGooglePlay(false);
+        AppUpdateUtil.setGuideToGooglePlay(true);
+        AppUpdateUtil.setDownloadByBrowser(true);
         OkGo.getInstance().init(this);
     }
 }

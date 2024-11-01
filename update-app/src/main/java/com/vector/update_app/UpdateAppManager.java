@@ -42,9 +42,41 @@ public class UpdateAppManager {
 
     public static void setGuideToGooglePlay(boolean guideToGooglePlay) {
         UpdateAppManager.guideToGooglePlay = guideToGooglePlay;
+        if(guideToGooglePlay){
+            //检查包名是否存在:
+            String url = "https://play.google.com/store/apps/details?id="+AppUtils.getAppPackageName();
+            //404代表不存在
+            defaultHttpImpl.asyncGet(url, new HashMap<>(), new HttpManager.Callback() {
+                @Override
+                public void onResponse(String result) {
+
+                }
+
+                @Override
+                public void onError(String error) {
+                    if(!TextUtils.isEmpty(error)){
+                        if(error.startsWith("404")){
+                            UpdateAppManager.guideToGooglePlay = false;
+                        }
+                    }
+                    UpdateAppManager.guideToGooglePlay = false;
+                }
+            });
+
+        }
     }
 
     static  boolean guideToGooglePlay;
+
+    public static boolean isDownloadByBrowser() {
+        return downloadByBrowser;
+    }
+
+    public static void setDownloadByBrowser(boolean downloadByBrowser) {
+        UpdateAppManager.downloadByBrowser = downloadByBrowser;
+    }
+
+    static  boolean downloadByBrowser;
     final static String INTENT_KEY = "update_dialog_values";
     final static String THEME_KEY = "theme_color";
     final static String TOP_IMAGE_KEY = "top_resId";
