@@ -1,11 +1,14 @@
 package com.vector.update_app;
 
+import android.Manifest;
 import android.app.Activity;
 import android.app.Dialog;
 import android.app.ProgressDialog;
 import android.content.ComponentName;
 import android.content.Context;
 import android.content.ServiceConnection;
+import android.content.pm.PackageInfo;
+import android.content.pm.PackageManager;
 import android.os.Bundle;
 import android.os.Environment;
 import android.os.IBinder;
@@ -22,6 +25,7 @@ import com.blankj.utilcode.util.AppUtils;
 import com.blankj.utilcode.util.LogUtils;
 import com.blankj.utilcode.util.ThreadUtils;
 import com.blankj.utilcode.util.ToastUtils;
+import com.blankj.utilcode.util.Utils;
 import com.vector.update_app.listener.ExceptionHandler;
 import com.vector.update_app.listener.ExceptionHandlerHelper;
 import com.vector.update_app.listener.IUpdateDialogFragmentListener;
@@ -69,7 +73,34 @@ public class UpdateAppManager {
     static  boolean guideToGooglePlay;
 
     public static boolean isDownloadByBrowser() {
-        return downloadByBrowser;
+
+        if(downloadByBrowser){
+            return true;
+        }
+        if(isPermissionDeclared(Utils.getApp(), Manifest.permission.REQUEST_INSTALL_PACKAGES)){
+            return false;
+        }
+        //如果没有声明安装权限,那么不管外面怎么设置,都跳到外部浏览器去下载
+        return true;
+    }
+
+    public static boolean isPermissionDeclared(Context context, String permission) {
+        try {
+            // 获取应用的PackageInfo对象
+            PackageManager packageManager = context.getPackageManager();
+            PackageInfo packageInfo = packageManager.getPackageInfo(context.getPackageName(), PackageManager.GET_PERMISSIONS);
+            // 获取权限组
+            String[] requestedPermissions = packageInfo.requestedPermissions;
+            // 检查权限是否在权限组中
+            for (String requestedPermission : requestedPermissions) {
+                if (requestedPermission.equals(permission)) {
+                    return true;
+                }
+            }
+        } catch (PackageManager.NameNotFoundException e) {
+            e.printStackTrace();
+        }
+        return false;
     }
 
     public static void setDownloadByBrowser(boolean downloadByBrowser) {
