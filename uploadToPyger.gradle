@@ -214,7 +214,7 @@ static def getGitVersionInfo() {
 
 rootProject.subprojects.each { project ->
     project.afterEvaluate{
-        addTasks111(project)
+        //addTasks111(project)
         addTasks222(project)
     }
 }
@@ -236,7 +236,7 @@ def addTasks222(Project project) {
         project.tasks.create(name: "uploadApkOf${project.name.capitalize()}${variant.name.capitalize()}"
                 , description: "上传apk到蒲公英-${project.name.capitalize()}${variant.name.capitalize()}"
                 , group: "uploadApk") {
-             dependsOn("pack${variant.name.capitalize()}")
+             dependsOn("assemble${variant.name.capitalize()}")
             doLast {
                 //如何在这里指定输出到文件?--> 已解决,exec里指定standardOutput
                 uploadApk("Release".equals(variant.name.capitalize()),project)
@@ -262,6 +262,12 @@ def addTasks111(Project project) {
     project.android.applicationVariants.all { variant ->
         //println("parseDeps--->variant " + variant.name)
 
+        //// 在根项目的 build.gradle 中定义跨模块的任务依赖
+        //project(':moduleA') {
+        //    tasks.named('taskA') {
+        //        dependsOn project(':moduleB').tasks.named('taskB')
+        //    }
+        //}
 
         //不加project.就会创建到跟目录
         project.tasks.create(name: "pack${variant.name.capitalize()}"
@@ -285,6 +291,7 @@ def addTasks111(Project project) {
                 String cmd = rootDir.absolutePath+path0 + " assemble${variant.name.capitalize()}"
                 println("run cmd: "+cmd)
                 try{
+                    //exec会创建新的gradle deomon,导致失败
                     exec {
                         workingDir project.projectDir
                         commandLine(rootDir.absolutePath+path0, "assemble${variant.name.capitalize()}")
