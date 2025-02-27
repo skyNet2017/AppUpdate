@@ -1,6 +1,7 @@
 package com.hss01248.update_default;
 
 
+import com.blankj.utilcode.util.ActivityUtils;
 import com.vector.update_app.IGetParam;
 import com.vector.update_app.UpdateAppManager;
 import com.vector.update_app.UpdateCallback;
@@ -56,6 +57,7 @@ public class AppUpdateUtil {
                 //更新地址
                 .setUpdateUrl(url)
                 .showLoadingAndToastError(true)
+                .setActivity(ActivityUtils.getTopActivity())
                 .setFromAppStart(false)
                 //.handleException(new )
                 //实现httpManager接口的对象
