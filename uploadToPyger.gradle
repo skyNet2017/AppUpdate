@@ -236,7 +236,7 @@ def addTasks222(Project project) {
         project.tasks.create(name: "uploadApkOf${project.name.capitalize()}${variant.name.capitalize()}"
                 , description: "上传apk到蒲公英-${project.name.capitalize()}${variant.name.capitalize()}"
                 , group: "uploadApk") {
-             dependsOn("pack${variant.name.capitalize()}")
+             dependsOn("assemble${variant.name.capitalize()}")
             doLast {
                 //如何在这里指定输出到文件?--> 已解决,exec里指定standardOutput
                 uploadApk("Release".equals(variant.name.capitalize()),project)
