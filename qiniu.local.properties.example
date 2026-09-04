@@ -1,0 +1,42 @@
+# 七牛云 AppUpdate 发布配置示例
+# 复制本文件内容到工程根目录 local.properties（勿提交真实密钥到 Git）
+# 参考：docs/json-config.md
+
+# ---------- 必填 ----------
+# 密钥对：https://portal.qiniu.com/user/key
+qiniu_ak=你的AccessKey
+qiniu_sk=你的SecretKey
+# 对象存储空间名
+qiniu_bucket=你的空间名
+
+# 下载/CDN 访问域名（空间绑定的自定义域名或测试域名）
+# 用于拼 apk_file_url、BuildConfig.update_json_url，供客户端下载
+# 注意：这不是上传域名
+qiniu_cdn_domain=https://kodo.example.com
+
+# ---------- 可选 ----------
+# 上传域名（与 CDN 下载域名不同）。默认华东区：
+#   华东 https://upload.qiniup.com
+#   华北 https://upload-z1.qiniup.com
+#   华南 https://upload-z2.qiniup.com
+#   北美 https://upload-na0.qiniup.com
+#   东南亚 https://upload-as0.qiniup.com
+# qiniu_upload_host=https://upload.qiniup.com
+
+# 对象键前缀，默认 appupdate
+# 最终 JSON：{cdn}/{prefix}/{packageName}/update.json
+# 最终 APK：{cdn}/{prefix}/{packageName}/{versionName}-{versionCode}.apk
+# qiniu_key_prefix=appupdate
+
+# 覆盖默认 applicationId（多渠道特殊包名时用）
+# qiniu_app_id=com.example.app
+
+# 自定义更新日志（默认取最近一条 git commit message）
+# update_log=修复若干问题
+
+# 是否强制更新
+# constraint=false
+# constraint_if_below=
+
+# 本地试跑不上传：也可命令行 -Pqiniu_dry_run=true
+# qiniu_dry_run=false

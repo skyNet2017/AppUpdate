@@ -5,7 +5,7 @@
 | 方式 | 说明 | 文档 |
 |------|------|------|
 | 蒲公英平台 | 使用蒲公英发布、版本管理与用户反馈 | [docs/pgyer.md](docs/pgyer.md) |
-| 普通 JSON 配置 | 自托管 JSON（如 GitHub raw / CDN）做版本检测 | [docs/json-config.md](docs/json-config.md) |
+| 普通 JSON 配置 | 自托管 JSON（GitHub raw / CDN / **七牛一键脚本**）做版本检测与发布 | [docs/json-config.md](docs/json-config.md) |
 
 客户端接入细节（默认协议、自定义协议、静默下载等）：
 

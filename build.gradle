@@ -8,7 +8,9 @@ buildscript {
     }catch(Throwable throwable){
         throwable.printStackTrace()
     }
-    apply from:'uploadToPyger.gradle'
+    // 蒲公英与七牛脚本二选一，勿同时 apply
+    // apply from:'uploadToPyger.gradle'
+    apply from:'uploadToQiniu.gradle'
     ext{
         //groupId='com.github.skyNet2017.AppUpdate'
         versionCode = '2.0.00'

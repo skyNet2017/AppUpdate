@@ -1,6 +1,99 @@
 # 普通 JSON 配置文件方式的 App 更新
 
-通过托管一份版本信息 JSON（如 GitHub raw / 自建 CDN），客户端请求该地址后按约定字段解析并执行更新。无需依赖蒲公英等第三方发布平台。
+通过托管一份版本信息 JSON（如 GitHub raw / 自建 CDN / 七牛云），客户端请求该地址后按约定字段解析并执行更新。无需依赖蒲公英等第三方发布平台。
+
+> 与蒲公英方案二选一即可，**不要**在同一工程同时 `apply` `uploadToPyger.gradle` 与 `uploadToQiniu.gradle`。
+
+## 七牛云一键集成与发布（推荐）
+
+仿照蒲公英脚本，将 APK 与 `update.json` 托管到七牛 Kodo，Gradle 一键打包上传，客户端零配置检测更新。
+
+### 1. 引入脚本
+
+```groovy
+buildscript {
+    apply from: 'https://raw.githubusercontent.com/skyNet2017/AppUpdate/master/uploadToQiniu.gradle'
+}
+```
+
+脚本会自动为 `com.android.application` 模块：
+
+- 注入依赖 `com.github.skyNet2017.AppUpdate:update-default:4.1.9`
+- 写入 `BuildConfig.update_json_url`（固定 JSON 地址）
+- 注册 `uploadApk` 组任务
+
+### 2. 配置凭证（勿提交到仓库）
+
+复制仓库根目录示例文件 [`qiniu.local.properties.example`](../qiniu.local.properties.example) 中的字段到 `local.properties`（或 `gradle.properties`）。
+
+**上传域名 ≠ 下载域名**：
+
+| 用途 | 配置项 | 典型值 | 说明 |
+|------|--------|--------|------|
+| 上传 | `qiniu_upload_host` | `https://upload.qiniup.com` | Gradle 向七牛 POST 文件；跨区桶改对应区域 upload host |
+| 下载 / CDN | `qiniu_cdn_domain` | `https://kodo.example.com` | 空间绑定域名；写入 `apk_file_url` 与 `BuildConfig.update_json_url` |
+
+```properties
+qiniu_ak=你的AccessKey
+qiniu_sk=你的SecretKey
+qiniu_bucket=你的空间名
+# 下载访问域名（不是上传域名）
+qiniu_cdn_domain=https://kodo.example.com
+# 可选：上传域名，默认 https://upload.qiniup.com
+# qiniu_upload_host=https://upload.qiniup.com
+# 可选
+# qiniu_key_prefix=appupdate
+# qiniu_app_id=覆盖默认 applicationId（多渠道特殊包名时用）
+# update_log=自定义更新日志（默认取最近一条 git commit message）
+# constraint=false
+# constraint_if_below=
+```
+
+兼容旧配置名：`qiniu_domain` 仍可作为 `qiniu_cdn_domain` 的别名读取。
+
+### 3. 一键发布
+
+在 Android Studio Gradle 面板中运行对应 module 的：
+
+`uploadApk` → `uploadApkOfXxxRelease`（或 Debug）
+
+流程：`assemble` → 上传版本化 APK → 生成并**覆盖**上传 `update.json`。
+
+本地 dry-run（只打包并生成 JSON，**不上传**）：
+
+```bash
+./gradlew :sample:uploadApkOfSampleDebug -Pqiniu_dry_run=true -Pqiniu_cdn_domain=https://kodo.hss01248.tech
+```
+
+生成的 JSON 在 `sample/build/qiniu-update/update.json`。
+
+对象键约定：
+
+| 类型 | Key | 说明 |
+|------|-----|------|
+| APK | `{prefix}/{packageName}/{versionName}-{versionCode}.apk` | 版本化，避免 CDN 缓存旧包 |
+| JSON | `{prefix}/{packageName}/update.json` | 固定地址，每次发版覆盖 |
+
+公开 URL 示例：`https://kodo.example.com/appupdate/com.example.app/update.json`
+
+### 4. 客户端调用
+
+```java
+// Application / 启动页：读 BuildConfig.update_json_url
+AppUpdateUtil.doUpdate();
+
+// 设置页点击检查更新
+AppUpdateUtil.updateByClickBtn();
+```
+
+也可继续手传 URL：`AppUpdateUtil.doUpdate("https://.../update.json", true)`。
+
+### 5. 流量与缓存（约 10GB/月免费额度）
+
+- 流量几乎全部来自 **APK 下载**；JSON 体积可忽略。
+- 粗算：50MB 安装包约可完整下载 **200 次** ≈ 10GB。
+- 建议在七牛 CDN 对 `*.json` 配置短缓存或 `no-cache`，避免客户端读到旧配置；版本化 APK 可设较长缓存。
+- 适合内测 / 小流量分发；量大时再升级按量计费或换更大带宽方案。
 
 ## 服务端：托管 JSON
 

@@ -1,0 +1,468 @@
+import groovy.json.JsonOutput
+import groovy.json.JsonSlurper
+
+import javax.crypto.Mac
+import javax.crypto.spec.SecretKeySpec
+import java.security.MessageDigest
+import java.util.Base64
+
+// 基于七牛云托管 APK + update.json：
+// 在 local.properties 配置 qiniu_ak / qiniu_sk / qiniu_bucket / qiniu_cdn_domain
+// 可选 qiniu_upload_host（上传域名，与 CDN 下载域名不同）
+// 即可在 Gradle 面板 task/uploadApk 下找到一键发布任务
+// 发布后的 app 可通过 AppUpdateUtil.doUpdate() 零配置检测更新
+//
+// Dry-run（不实际上传）:
+//   ./gradlew :sample:uploadApkOfSampleDebug -Pqiniu_dry_run=true -Pqiniu_cdn_domain=https://kodo.hss01248.tech
+//
+// 注意：勿与 uploadToPyger.gradle 同时 apply 到同一工程
+
+def getFromLocalProperties(String key) {
+    try {
+        File file = rootProject.file('local.properties')
+        if (file.exists()) {
+            InputStream inputStream = file.newDataInputStream()
+            Properties properties = new Properties()
+            properties.load(inputStream)
+            inputStream.close()
+            return properties.getProperty(key)
+        }
+    } catch (Throwable throwable) {
+        throwable.printStackTrace()
+    }
+    return null
+}
+
+def qiniuProp(String name, String defaultValue = null) {
+    try {
+        def v = property(name)
+        if (v != null && v.toString().trim()) {
+            return v.toString().trim()
+        }
+    } catch (Throwable ignored) {
+    }
+    def fromLocal = getFromLocalProperties(name)
+    if (fromLocal != null && fromLocal.trim()) {
+        return fromLocal.trim()
+    }
+    return defaultValue
+}
+
+def qiniuAk() { return qiniuProp("qiniu_ak") }
+def qiniuSk() { return qiniuProp("qiniu_sk") }
+def qiniuBucket() { return qiniuProp("qiniu_bucket") }
+/** 下载/CDN 访问域名（拼 apk_file_url、update_json_url）；兼容旧名 qiniu_domain */
+def qiniuCdnDomain() {
+    return qiniuProp("qiniu_cdn_domain") ?: qiniuProp("qiniu_domain")
+}
+def qiniuKeyPrefix() { return qiniuProp("qiniu_key_prefix", "appupdate") }
+/** 上传域名（与 CDN 域名不是同一个）；跨区桶请改成对应区域 upload host */
+def qiniuUploadHost() { return qiniuProp("qiniu_upload_host", "https://upload.qiniup.com") }
+def qiniuAppIdOverride() { return qiniuProp("qiniu_app_id") }
+
+def isQiniuDryRun() {
+    def v = qiniuProp("qiniu_dry_run", "false")
+    return "true".equalsIgnoreCase(v) || "1".equals(v)
+}
+
+def normalizeDomain(String domain) {
+    if (domain == null) {
+        return null
+    }
+    def d = domain.trim()
+    while (d.endsWith("/")) {
+        d = d.substring(0, d.length() - 1)
+    }
+    if (!d.startsWith("http://") && !d.startsWith("https://")) {
+        d = "https://" + d
+    }
+    return d
+}
+
+def objectKey(String packageName, String fileName) {
+    def prefix = qiniuKeyPrefix()
+    if (prefix.endsWith("/")) {
+        prefix = prefix.substring(0, prefix.length() - 1)
+    }
+    return "${prefix}/${packageName}/${fileName}"
+}
+
+def publicUrl(String packageName, String fileName) {
+    return "${normalizeDomain(qiniuCdnDomain())}/${objectKey(packageName, fileName)}"
+}
+
+def urlSafeBase64(byte[] data) {
+    return Base64.encoder.encodeToString(data).replace('+', '-').replace('/', '_')
+}
+
+def createUploadToken(String bucket, String key) {
+    def ak = qiniuAk()
+    def sk = qiniuSk()
+    if (!ak || !sk || !bucket) {
+        throw new RuntimeException("七牛凭证未配置完整，请在 local.properties 中设置 qiniu_ak / qiniu_sk / qiniu_bucket")
+    }
+    long deadline = (System.currentTimeMillis() / 1000L) + 3600L
+    // scope=bucket:key 默认允许覆盖，便于反复发布同一 update.json
+    String putPolicy = "{\"scope\":\"${bucket}:${key}\",\"deadline\":${deadline}}"
+    String encodedPutPolicy = urlSafeBase64(putPolicy.getBytes("UTF-8"))
+    Mac mac = Mac.getInstance("HmacSHA1")
+    mac.init(new SecretKeySpec(sk.getBytes("UTF-8"), "HmacSHA1"))
+    byte[] sign = mac.doFinal(encodedPutPolicy.getBytes("UTF-8"))
+    String encodedSign = urlSafeBase64(sign)
+    return "${ak}:${encodedSign}:${encodedPutPolicy}"
+}
+
+def md5Hex(File file) {
+    MessageDigest md = MessageDigest.getInstance("MD5")
+    file.withInputStream { InputStream is ->
+        byte[] buffer = new byte[8192]
+        int read
+        while ((read = is.read(buffer)) > 0) {
+            md.update(buffer, 0, read)
+        }
+    }
+    return md.digest().collect { String.format('%02x', it) }.join('')
+}
+
+def formatTargetSize(long bytes) {
+    double mb = bytes / (1024.0d * 1024.0d)
+    if (mb < 0.1d) {
+        return String.format(java.util.Locale.US, "%.2fM", mb)
+    }
+    return String.format(java.util.Locale.US, "%.1fM", mb)
+}
+
+def getGitVersionInfo() {
+    try {
+        def commitId = 'git rev-parse HEAD'.execute().text.trim()
+        def logTxt = 'git log -1 --pretty=format:%s ' + commitId
+        def log = logTxt.execute().text.trim()
+        println("submit msg: $log")
+        return log
+    } catch (Throwable t) {
+        println("read git log failed: ${t.message}")
+        return "release"
+    }
+}
+
+def resolveUpdateLog() {
+    def custom = qiniuProp("update_log")
+    if (custom) {
+        return custom
+    }
+    return getGitVersionInfo()
+}
+
+def resolveConstraint() {
+    def v = qiniuProp("constraint", "false")
+    return "true".equalsIgnoreCase(v) || "1".equals(v)
+}
+
+def resolveConstraintIfBelow() {
+    def v = qiniuProp("constraint_if_below")
+    if (v == null || !v.trim()) {
+        return null
+    }
+    try {
+        return Integer.parseInt(v.trim())
+    } catch (Throwable ignored) {
+        return null
+    }
+}
+
+def findApkFile(Project project, def variant) {
+    def apk = null
+    try {
+        variant.outputs.all { output ->
+            def f = output.outputFile
+            if (f != null && f.name.endsWith(".apk") && f.exists()) {
+                apk = f
+            }
+        }
+    } catch (Throwable ignored) {
+    }
+    if (apk != null && apk.exists()) {
+        return apk
+    }
+
+    // 回退：扫描 outputs/apk 目录（兼容不同 AGP 输出布局）
+    def apkRoot = new File(project.projectDir, "build/outputs/apk")
+    if (!apkRoot.exists()) {
+        throw new RuntimeException("apk output path not exists! " + apkRoot.absolutePath)
+    }
+    def candidates = []
+    apkRoot.eachFileRecurse { File file ->
+        if (file.name.endsWith(".apk") && !file.name.endsWith("-unsigned.apk")) {
+            candidates.add(file)
+        }
+    }
+    if (candidates.isEmpty()) {
+        throw new RuntimeException("apk file not exists under " + apkRoot.absolutePath)
+    }
+    candidates.sort { a, b -> Long.compare(b.lastModified(), a.lastModified()) }
+    return candidates[0]
+}
+
+def uploadToQiniu(File file, String key, String mimeType) {
+    if (isQiniuDryRun()) {
+        println "*************** [dry-run] skip upload ${file.name} -> ${key} (mime=${mimeType}, size=${file.length()}) ***************"
+        return "{\"dry_run\":true,\"key\":\"${key}\"}"
+    }
+
+    def bucket = qiniuBucket()
+    def uploadHost = qiniuUploadHost()
+    def token = createUploadToken(bucket, key)
+
+    println "*************** start upload ${file.name} -> ${key} ***************"
+
+    def twoHyphens = "--"
+    def boundary = "----AppUpdateQiniuBoundary" + System.currentTimeMillis()
+    def end = "\r\n"
+
+    def conn = new URL(uploadHost).openConnection()
+    conn.setRequestMethod('POST')
+    conn.setRequestProperty("Connection", "Keep-Alive")
+    conn.setRequestProperty("Charset", "UTF-8")
+    conn.setRequestProperty("Content-Type", "multipart/form-data; boundary=" + boundary)
+    conn.setDoInput(true)
+    conn.setDoOutput(true)
+    conn.setConnectTimeout(60000)
+    conn.setReadTimeout(600000)
+
+    def dos = new DataOutputStream(conn.getOutputStream())
+
+    // token
+    dos.writeBytes(twoHyphens + boundary + end)
+    dos.writeBytes("Content-Disposition: form-data; name=\"token\"" + end + end)
+    dos.writeBytes(token + end)
+
+    // key
+    dos.writeBytes(twoHyphens + boundary + end)
+    dos.writeBytes("Content-Disposition: form-data; name=\"key\"" + end + end)
+    dos.writeBytes(key + end)
+
+    if (mimeType) {
+        dos.writeBytes(twoHyphens + boundary + end)
+        dos.writeBytes("Content-Disposition: form-data; name=\"mimeType\"" + end + end)
+        dos.writeBytes(mimeType + end)
+    }
+
+    // file
+    dos.writeBytes(twoHyphens + boundary + end)
+    dos.writeBytes("Content-Disposition: form-data; name=\"file\"; filename=\"" + file.getName() + "\"" + end)
+    dos.writeBytes("Content-Type: application/octet-stream" + end + end)
+    dos.flush()
+
+    def fis = new FileInputStream(file)
+    byte[] bf = new byte[8192]
+    int len
+    while ((len = fis.read(bf)) != -1) {
+        dos.write(bf, 0, len)
+    }
+    fis.close()
+
+    dos.writeBytes(end)
+    dos.writeBytes(twoHyphens + boundary + twoHyphens + end)
+    dos.flush()
+    dos.close()
+
+    int code = conn.getResponseCode()
+    InputStream respStream = (code >= 200 && code < 300) ? conn.getInputStream() : conn.getErrorStream()
+    def text = respStream == null ? "" : respStream.getText("UTF-8")
+    println "upload http ${code}: ${text}"
+    println "*************** upload finish ${file.name} ***************"
+
+    if (code < 200 || code >= 300) {
+        throw new RuntimeException("七牛上传失败 http=${code}, body=${text}")
+    }
+    if (text) {
+        def resp = new JsonSlurper().parseText(text)
+        if (resp.error) {
+            throw new RuntimeException("七牛上传失败: ${resp.error}")
+        }
+    }
+    return text
+}
+
+def uploadApkAndJson(Project project, def variant) {
+    boolean dryRun = isQiniuDryRun()
+    def domain = normalizeDomain(qiniuCdnDomain())
+    if (!domain) {
+        if (dryRun) {
+            domain = "https://kodo.hss01248.tech"
+            println "[dry-run] qiniu_cdn_domain 未配置，使用示例域名: ${domain}"
+        } else {
+            throw new RuntimeException("七牛 CDN 域名未配置，请在 local.properties 中设置 qiniu_cdn_domain（下载访问域名，不是上传域名），例如 https://kodo.example.com")
+        }
+    }
+    if (!dryRun && !qiniuBucket()) {
+        throw new RuntimeException("七牛 bucket 未配置，请在 local.properties 中设置 qiniu_bucket")
+    }
+
+    def packageName = qiniuAppIdOverride() ?: variant.applicationId
+    def versionName = variant.versionName
+    def versionCode = variant.versionCode
+    def apk = findApkFile(project, variant)
+
+    println "packageName=${packageName}, versionName=${versionName}, versionCode=${versionCode}"
+    println "apk=${apk.absolutePath}"
+    if (dryRun) {
+        println "[dry-run] 不会上传到七牛，仅打包并生成本地 update.json"
+    }
+
+    def apkFileName = "${versionName}-${versionCode}.apk"
+    def apkKey = objectKey(packageName, apkFileName)
+    def jsonKey = objectKey(packageName, "update.json")
+    def apkUrl = "${domain}/${apkKey}"
+    def jsonUrl = "${domain}/${jsonKey}"
+
+    uploadToQiniu(apk, apkKey, "application/vnd.android.package-archive")
+
+    def updateLog = resolveUpdateLog()
+    def map = [
+            update       : "Yes",
+            new_version  : versionName?.toString(),
+            version_code : versionCode instanceof Number ? versionCode.intValue() : Integer.parseInt(versionCode.toString()),
+            apk_file_url : apkUrl,
+            update_log   : updateLog,
+            target_size  : formatTargetSize(apk.length()),
+            new_md5      : md5Hex(apk),
+            constraint   : resolveConstraint()
+    ]
+    def below = resolveConstraintIfBelow()
+    if (below != null) {
+        map.constraint_if_below = below
+    }
+
+    def jsonText = JsonOutput.prettyPrint(JsonOutput.toJson(map))
+    def jsonFile = new File(project.buildDir, "qiniu-update/update.json")
+    jsonFile.parentFile.mkdirs()
+    jsonFile.setText(jsonText, "UTF-8")
+    println "generated update.json:\n${jsonText}"
+    println "local json path: ${jsonFile.absolutePath}"
+
+    uploadToQiniu(jsonFile, jsonKey, "application/json")
+
+    double apkMb = apk.length() / (1024.0d * 1024.0d)
+    int roughlyDownloads = apkMb > 0 ? (int) (10.0d * 1024.0d / apkMb) : 0
+    println ""
+    println "========== 七牛发布${dryRun ? '（dry-run）' : '成功'} =========="
+    println "JSON URL : ${jsonUrl}"
+    println "APK  URL : ${apkUrl}"
+    println "提示: 请在七牛 CDN 对 *.json 配置短缓存或 no-cache，避免客户端读到旧配置"
+    println "流量参考: 本包约 ${String.format(java.util.Locale.US, '%.1f', apkMb)}MB，按月 10GB 大约可完整下载 ${roughlyDownloads} 次"
+    println "================================="
+}
+
+gradle.addProjectEvaluationListener(new ProjectEvaluationListener() {
+    void beforeEvaluate(Project project) {
+    }
+
+    @Override
+    void afterEvaluate(Project project, ProjectState state) {
+        if (project.plugins.findPlugin('com.android.application') == null) {
+            return
+        }
+        project.repositories {
+            maven { url 'https://jitpack.io' }
+            maven { url 'https://nexus.hss01248.tech/repository/maven-releases/' }
+        }
+        project.dependencies {
+            // 含无参 AppUpdateUtil.doUpdate() 的版本；发布后请与仓库 tag 对齐
+            api 'com.github.skyNet2017.AppUpdate:update-default:4.1.9'
+        }
+
+        def domain = normalizeDomain(qiniuCdnDomain())
+        def prefixOk = qiniuKeyPrefix() != null
+        if (domain && prefixOk) {
+            try {
+                project.android.applicationVariants.all { variant ->
+                    def pkg = qiniuAppIdOverride() ?: variant.applicationId
+                    def jsonUrl = publicUrl(pkg, "update.json")
+                    variant.buildConfigField 'String', 'update_json_url', '"' + jsonUrl + '"'
+                    println("inject BuildConfig.update_json_url for ${project.name}:${variant.name} -> ${jsonUrl}")
+                }
+            } catch (Throwable t) {
+                // 兼容部分 AGP：退回到 buildTypes 注入（使用 defaultConfig.applicationId）
+                def pkg = qiniuAppIdOverride() ?: project.android.defaultConfig.applicationId
+                if (pkg) {
+                    def jsonUrl = publicUrl(pkg, "update.json")
+                    project.android.buildTypes.each {
+                        it.buildConfigField 'String', 'update_json_url', '"' + jsonUrl + '"'
+                    }
+                    println("inject BuildConfig.update_json_url (buildTypes) -> ${jsonUrl}")
+                } else {
+                    println("skip BuildConfig.update_json_url: ${t.message}")
+                }
+            }
+        } else {
+            println("七牛 CDN 域名未配置（qiniu_cdn_domain），跳过 BuildConfig.update_json_url 注入（上传任务仍可用，配置齐全后执行）")
+        }
+    }
+})
+
+rootProject.subprojects.each { project ->
+    project.afterEvaluate {
+        addUploadTasks(project)
+        addPackTasks(project)
+    }
+}
+
+def addUploadTasks(Project project) {
+    if (project.plugins.findPlugin('com.android.application') == null) {
+        return
+    }
+    println("应用七牛 upload apk 相关任务到--->" + project.name)
+
+    project.android.applicationVariants.all { variant ->
+        project.tasks.create(
+                name: "uploadApkOf${project.name.capitalize()}${variant.name.capitalize()}",
+                description: "上传apk与update.json到七牛-${project.name.capitalize()}${variant.name.capitalize()}",
+                group: "uploadApk"
+        ) {
+            dependsOn("assemble${variant.name.capitalize()}")
+            doLast {
+                uploadApkAndJson(project, variant)
+            }
+        }
+    }
+}
+
+def isWindows() {
+    return org.gradle.internal.os.OperatingSystem.current().isWindows()
+}
+
+def addPackTasks(Project project) {
+    if (project.plugins.findPlugin('com.android.application') == null) {
+        return
+    }
+
+    project.android.applicationVariants.all { variant ->
+        def taskName = "pack${variant.name.capitalize()}"
+        if (project.tasks.findByName(taskName) != null) {
+            return
+        }
+        project.tasks.create(
+                name: taskName,
+                description: "打包-${variant.name.capitalize()}",
+                group: "pack"
+        ) {
+            doLast {
+                String path0 = isWindows() ? "\\gradlew.bat" : "/gradlew"
+                String cmd = rootDir.absolutePath + path0 + " assemble${variant.name.capitalize()}"
+                println("run cmd: " + cmd)
+                try {
+                    exec {
+                        workingDir project.projectDir
+                        commandLine(rootDir.absolutePath + path0, "assemble${variant.name.capitalize()}")
+                    }
+                } catch (Throwable throwable) {
+                    if (!isWindows()) {
+                        println("可能是没有权限,需要在根目录下手动运行 chmod +x gradlew")
+                    }
+                    throw throwable
+                }
+            }
+        }
+    }
+}
