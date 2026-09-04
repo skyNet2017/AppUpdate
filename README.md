@@ -1,218 +1,16 @@
-
 ## Android 版本更新
 
-# 更新策略: abtest功能支持
+本库支持两种更新管理方式，文档已拆分如下：
 
-目前实现的是位于客户端的abtest.
+| 方式 | 说明 | 文档 |
+|------|------|------|
+| 蒲公英平台 | 使用蒲公英发布、版本管理与用户反馈 | [docs/pgyer.md](docs/pgyer.md) |
+| 普通 JSON 配置 | 自托管 JSON（如 GitHub raw / CDN）做版本检测 | [docs/json-config.md](docs/json-config.md) |
 
-支持根据uid来random和根据deviceId(AndroidId)来random.
+客户端接入细节（默认协议、自定义协议、静默下载等）：
 
-对应的json配置文件:
-
-```json
-{
-  "update": "Yes",
-  "new_version": "1.1.00",
-  "version_code":2000,
-  "app_store_id": "jufjj89",
-  "app_store_link": "http://kodo.hss01248.tech/ai/app-release.apk",
-  "apk_file_url": "http://kodo.hss01248.tech/ai/app-release.apk",
-  "file_url_mac": "http://kodo.hss01248.tech/ai/MyChatAI-release.dmg",
-  "file_url_win": "http://kodo.hss01248.tech/ai/MyChatAI-release.exe",
-  "file_url_ios": "http://kodo.hss01248.tech/ai/MyChatAI-release.dpa",
-  "update_log": "1. android webview优化,可录音 \r\n",
-  "target_size": "25M",
-  "show_dialog_when_app_start":false,
-  "new_md5":"",
-  "constraint": false,
-  "constraint_if_below": 1,
-  "abtest_on":true,
-  "abtest_info":{
-  	"abtest_percent": 90,
-    "abtest_by_uid": true,
-    "update": "Yes",
-    "new_version": "2.1.00",
-    "version_code":2100,
-    "app_store_id": "jufjj89",
-    "app_store_link": "http://kodo.hss01248.tech/ai/app-release.apk",
-    "apk_file_url": "http://kodo.hss01248.tech/ai/app-release.apk",
-    "file_url_mac": "http://kodo.hss01248.tech/ai/MyChatAI-release.dmg",
-    "file_url_win": "http://kodo.hss01248.tech/ai/MyChatAI-release.exe",
-    "file_url_ios": "http://kodo.hss01248.tech/ai/MyChatAI-release.dpa",
-    "update_log": "1. android webview优化,可录音abtest \r\n",
-    "target_size": "26M",
-    "show_dialog_when_app_start":true,
-    "new_md5":"",
-    "constraint": true,
-    "constraint_if_below": 0
-  }
-}
-```
-
-
-
-# 更新策略:弹窗or红点
-
-```java
-    //app启动时检测到更新后弹窗. 如果false,则只在设置页面显示红点
-    private boolean show_dialog_when_app_start = true;
-```
-
-
-
-
-
-# 策略
-
-检查到更新后,可配置跳转到谷歌商店/外部浏览器打开/app内下载
-
-```java
- AppUpdateUtil.setGuideToGooglePlay(true);
- AppUpdateUtil.setDownloadByBrowser(true);
-```
-
-其中内部有更细致的判断:
-
-```java
-    public static void setGuideToGooglePlay(boolean guideToGooglePlay) {
-        UpdateAppManager.guideToGooglePlay = guideToGooglePlay;
-        if(guideToGooglePlay){
-            //检查包名是否存在:
-            String url = "https://play.google.com/store/apps/details?id="+AppUtils.getAppPackageName();
-            
-            defaultHttpImpl.asyncGet(url, new HashMap<>(), new HttpManager.Callback() {
-                @Override
-                public void onResponse(String result) {
-
-                }
-
-                @Override
-                public void onError(String error) {
-                    if(!TextUtils.isEmpty(error)){
-                        if(error.startsWith("404")){
-                          //404代表不存在,还没有上架
-                            UpdateAppManager.guideToGooglePlay = false;
-                        }
-                    }
-                  //网络不通,也不跳谷歌商店
-                    UpdateAppManager.guideToGooglePlay = false;
-                }
-            });
-
-        }
-    }
-```
-
-
-
-```java
-public static boolean isDownloadByBrowser() {
-
-        if(downloadByBrowser){
-            return true;
-        }
-        if(isPermissionDeclared(Utils.getApp(), Manifest.permission.REQUEST_INSTALL_PACKAGES)){
-            return false;
-        }
-        //如果没有声明安装权限,那么不管外面怎么设置,都跳到外部浏览器去下载
-        return true;
-    }
-```
-
-
-
-点击下载/按钮的逻辑:
-
-```java
-    private void installApp() {
-        if(UpdateAppManager.isGuideToGooglePlay()){
-           boolean success =  guideToGooglePlay();
-           if(success){
-               return;
-           }
-        }
-
-        //跳到浏览器去下载:
-        if(UpdateAppManager.isDownloadByBrowser()){
-            String url = mUpdateApp.getApkFileUrl();
-            openUrl(url);
-            return;
-        }
-
-        if (AppUpdateUtils.appHasDownloaded(mUpdateApp)) {
-            AppUpdateUtils.checkAndInstallApk( AppUpdateUtils.getAppFile(mUpdateApp));
-            //安装完自杀
-            //如果上次是强制更新，但是用户在下载完，强制杀掉后台，重新启动app后，则会走到这一步，所以要进行强制更新的判断。
-            if (!mUpdateApp.isConstraint()) {
-                dismiss();
-            } else {
-                showInstallBtn(AppUpdateUtils.getAppFile(mUpdateApp));
-            }
-        } else {
-            downloadApp();
-            //这里的隐藏对话框会和强制更新冲突，导致强制更新失效，所以当强制更新时，不隐藏对话框。
-            if (mUpdateApp.isHideDialog() && !mUpdateApp.isConstraint()) {
-                dismiss();
-            }
-        }
-    }
-```
-
-
-
-# 服务端
-
-### 直接使用github的文件存储功能.
-
-https://raw.githubusercontent.com/WVector/AppUpdateDemo/master/json/json.txt
-
-内容为:
-
-```json
-{
-  "update": "Yes",
-  "new_version": "0.8.3",
-   "version_code":1000,
-  "apk_file_url": "https://raw.githubusercontent.com/WVector/AppUpdateDemo/master/apk/sample-debug.apk",
-  "update_log": "1，添加删除信用卡接口。\r\n2，添加vip认证。\r\n3，区分自定义消费，一个小时不限制。\r\n4，添加放弃任务接口，小时内不生成。\r\n5，消费任务手动生成。",
-  "target_size": "5M",
-  "new_md5":"b97bea014531123f94c3ba7b7afbaad2",
-  "constraint": false
-}
-```
-
-apk也直接放github上,国内可以通过jsdeliver来访问
-
-
-
-### 也可使用蒲公英的发布和版本管理功能:
-
-```groovy
-api 'com.github.skyNet2017.AppUpdate:update-pyger:4.1.8'
-```
-
-一键发布和更新脚本:
-
-```groovy
-buildscript {
-    apply from:'https://raw.githubusercontent.com/skyNet2017/AppUpdate/master/uploadToPyger.gradle?a=3'
-}
-```
-
-Local.properties里配置:
-
-```properties
-pyger_api_key=xxxx
-pyger_app_key=yyyy
-```
-
-那么,在Android studio的gradle面板里运行对应的uploadApk命令即可:
-
-该工程的应用module也会自动带有app更新功能.
-
-![image-20241101143533073](https://cdn.jsdelivr.net/gh/shuiniuhss/myimages@main/imagemac3/image-20241101143533073.png)
-
-
+- [java 方式](docs/java.md)
+- [kotlin 方式](docs/kotlin.md)
 
 ## 目录
 
@@ -311,8 +109,10 @@ dependencies {
 
 ## 详细说明
 
-- [java方式](java.md)
-- [kotlin方式](kotlin.md)
+- [java方式](docs/java.md)
+- [kotlin方式](docs/kotlin.md)
+- [蒲公英更新管理平台](docs/pgyer.md)
+- [普通 JSON 配置文件方式](docs/json-config.md)
 
 #### 进度条使用的是代码家的「[NumberProgressBar](https://github.com/daimajia/NumberProgressBar)」
 
@@ -442,51 +242,6 @@ V3.3.0
 
 	1，新增自定义对话框。
 	2，适配kotlin，写法更简单。 
-
-
-
-
-
-
-
-# 基于蒲公英网站的app更新和用户反馈系统
-
-## app更新
-
-```groovy
-   api 'com.github.skyNet2017.AppUpdate:update-default:4.0.6'
-```
-
-
-
-```java
-PygerAppUpdateUtil.doUpdate("key", "token",new ExceptionHandler() {
-            @Override
-            public void onException(Exception e) {
-                e.printStackTrace();
-```
-
-![image-20230130120530421](https://cdn.jsdelivr.net/gh/shuiniuhss/myimages@main/imagemac3/image-20230130120530421.png)
-
-## 用户反馈
-
-```groovy
-   api 'com.github.skyNet2017.AppUpdate:feedback:4.0.6'
-```
-
-
-
-```java
-FeedbackUtil.showPygerFeedback("https://www.pgyer.com/YVeW");
-```
-
-
-
-![image-20230130120502987](https://cdn.jsdelivr.net/gh/shuiniuhss/myimages@main/imagemac3/image-20230130120502987.png)
-
-
-
-
 
 ## License
 
