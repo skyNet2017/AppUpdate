@@ -37,6 +37,7 @@ dependencies {
 
     implementation project(path: ':update-default')
     implementation project(path: ':update-pyger')
+    implementation project(path: ':update-zealot')
 
 
     implementation 'androidx.multidex:multidex:2.0.0'
