@@ -32,5 +32,9 @@ dependencies {
     testImplementation 'junit:junit:4.13.2'
     androidTestImplementation 'androidx.test.ext:junit:1.1.5'
     androidTestImplementation 'androidx.test.espresso:espresso-core:3.5.1'
-    api 'com.github.hss01248.utilcodeEnhance:baseWebview:1.2.1'
+    // qr-scan → Luban 在部分镜像上解析失败，反馈页不依赖扫码
+    api('com.github.hss01248.utilcodeEnhance:baseWebview:1.2.1') {
+        exclude group: 'com.github.hss01248.utilcodeEnhance', module: 'qr-scan'
+        exclude group: 'com.github.skyNet2017.Luban', module: 'luban'
+    }
 }

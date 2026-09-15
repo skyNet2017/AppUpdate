@@ -8,9 +8,10 @@ buildscript {
     }catch(Throwable throwable){
         throwable.printStackTrace()
     }
-    // 蒲公英与七牛脚本二选一，勿同时 apply
+    // 蒲公英 / 七牛 / Zealot 脚本三选一，勿同时 apply
     // apply from:'uploadToPyger.gradle'
-    apply from:'uploadToQiniu.gradle'
+    // apply from:'uploadToQiniu.gradle'
+    apply from:'uploadToZealot.gradle'   // 自建 Zealot：见 docs/zealot.md
     ext{
         //groupId='com.github.skyNet2017.AppUpdate'
         versionCode = '2.0.00'

@@ -1,0 +1,344 @@
+import groovy.json.JsonSlurper
+
+// 基于自建 Zealot（https://appstore.timefly.art）：
+// 在 local.properties 配置：
+//   zealot_channel_key=渠道 Key（不是 slug，如不是 JLM4A）
+//   zealot_token=用户 API Key（仅上传用，不进 APK）
+//   zealot_endpoint=https://appstore.timefly.art   （可选）
+//   zealot_lib_version=4.2.0                       （可选，jitpack 版本）
+//   zealot_use_local=true                          （本仓库调试用，依赖 :update-zealot）
+//
+// 根 build.gradle：
+//   apply from: 'uploadToZealot.gradle'
+// 或：
+//   apply from: 'https://raw.githubusercontent.com/skyNet2017/AppUpdate/master/uploadToZealot.gradle'
+//
+// 勿与 uploadToPyger.gradle / uploadToQiniu.gradle 同时 apply。
+
+def propOrLocal(String key) {
+    try {
+        def v = rootProject.hasProperty(key) ? rootProject.property(key) : null
+        if (v != null && v.toString().trim()) {
+            return v.toString().trim()
+        }
+    } catch (Throwable ignored) {
+    }
+    return getFromLocalProperties(key)
+}
+
+def zealotEndpoint() {
+    def v = propOrLocal("zealot_endpoint")
+    if (v == null || v.isEmpty()) {
+        return "https://appstore.timefly.art"
+    }
+    while (v.endsWith("/")) {
+        v = v.substring(0, v.length() - 1)
+    }
+    return v
+}
+
+def zealotChannelKey() {
+    return propOrLocal("zealot_channel_key")
+}
+
+def zealotToken() {
+    return propOrLocal("zealot_token")
+}
+
+def zealotLibVersion() {
+    def v = propOrLocal("zealot_lib_version")
+    return (v == null || v.isEmpty()) ? "4.2.0" : v
+}
+
+def zealotUseLocal() {
+    def v = propOrLocal("zealot_use_local")
+    if (v != null) {
+        return "true".equalsIgnoreCase(v) || "1".equals(v)
+    }
+    // 本仓库根工程包含 :update-zealot 时默认走本地模块，便于未发 jitpack tag 前自测
+    try {
+        return rootProject.findProject(":update-zealot") != null
+    } catch (Throwable ignored) {
+        return false
+    }
+}
+
+def getFromLocalProperties(String key) {
+    try {
+        File file = rootProject.file('local.properties')
+        if (file.exists()) {
+            InputStream inputStream = file.newDataInputStream()
+            Properties properties = new Properties()
+            properties.load(inputStream)
+            return properties.getProperty(key)
+        }
+    } catch (Throwable throwable) {
+        throwable.printStackTrace()
+    }
+    return null
+}
+
+gradle.addProjectEvaluationListener(new ProjectEvaluationListener() {
+    void beforeEvaluate(Project project) {
+    }
+
+    @Override
+    void afterEvaluate(Project project, ProjectState state) {
+        if (project.plugins.findPlugin('com.android.application') == null) {
+            return
+        }
+        project.repositories {
+            maven { url 'https://jitpack.io' }
+            maven { url 'https://nexus.hss01248.tech/repository/maven-releases/' }
+        }
+
+        boolean useLocal = zealotUseLocal()
+        if (useLocal && rootProject.findProject(":update-zealot") != null) {
+            def localZealot = rootProject.project(":update-zealot")
+            println("[uploadToZealot] ${project.name} -> project(':update-zealot')")
+            project.dependencies.add("implementation", localZealot)
+        } else {
+            def ver = zealotLibVersion()
+            println("[uploadToZealot] ${project.name} -> com.github.skyNet2017.AppUpdate:update-zealot:${ver}")
+            project.dependencies.add("implementation", "com.github.skyNet2017.AppUpdate:update-zealot:${ver}")
+        }
+
+        def endpoint = zealotEndpoint()
+        def channelKey = zealotChannelKey() ?: ""
+        project.android {
+            buildTypes.each {
+                it.buildConfigField 'String', 'zealot_endpoint', '"' + endpoint + '"'
+                it.buildConfigField 'String', 'zealot_channel_key', '"' + channelKey + '"'
+            }
+        }
+    }
+})
+
+/**
+ * 上传 APK 到 Zealot POST /api/apps/upload
+ */
+def uploadApk(boolean isRelease, Project porject) {
+    def curPath = porject.projectDir
+    println "curPath:" + curPath
+
+    def apk = findApk(porject, isRelease)
+    if (apk == null) {
+        throw new RuntimeException("apk file not exists under build/outputs/apk")
+    }
+
+    def endpoint = zealotEndpoint()
+    def token = zealotToken()
+    def channelKey = zealotChannelKey()
+    if (token == null || token.isEmpty()) {
+        throw new RuntimeException("Zealot token 未配置。请在 local.properties 设置 zealot_token（用户页 API Key）")
+    }
+    if (channelKey == null || channelKey.isEmpty()) {
+        throw new RuntimeException("Zealot channel_key 未配置。请在 local.properties 设置 zealot_channel_key（渠道 Key，不是 slug）")
+    }
+
+    def uploadUrl = endpoint + "/api/apps/upload?token=" + URLEncoder.encode(token, "UTF-8")
+    println "*************** start upload to Zealot ***************"
+    println "url: ${endpoint}/api/apps/upload?token=***"
+    println "channel_key: ${channelKey.take(8)}..."
+    println "file: ${apk.absolutePath}"
+
+    def twoHyphens = "--"
+    def boundary = "*********"
+    def end = "\r\n"
+    def changelog = getGitVersionInfo()
+
+    def conn = new URL(uploadUrl).openConnection()
+    conn.setRequestMethod('POST')
+    conn.setRequestProperty("Connection", "Keep-Alive")
+    conn.setRequestProperty("Charset", "UTF-8")
+    conn.setRequestProperty("Content-Type", "multipart/form-data;boundary=" + boundary)
+    conn.setConnectTimeout(60000)
+    conn.setReadTimeout(600000)
+    conn.setDoInput(true)
+    conn.setDoOutput(true)
+
+    def sb = new StringBuilder()
+
+    sb.append(twoHyphens).append(boundary).append(end)
+    sb.append("Content-Disposition: form-data; name=channel_key")
+    sb.append(end).append(end)
+    sb.append(channelKey).append(end)
+
+    sb.append(twoHyphens).append(boundary).append(end)
+    sb.append("Content-Disposition: form-data; name=source")
+    sb.append(end).append(end)
+    sb.append("gradle").append(end)
+
+    sb.append(twoHyphens).append(boundary).append(end)
+    sb.append("Content-Disposition: form-data; name=changelog")
+    sb.append(end).append(end)
+    sb.append(changelog).append(end)
+
+    try {
+        def commit = 'git rev-parse HEAD'.execute().text.trim()
+        if (commit) {
+            sb.append(twoHyphens).append(boundary).append(end)
+            sb.append("Content-Disposition: form-data; name=git_commit")
+            sb.append(end).append(end)
+            sb.append(commit).append(end)
+        }
+        def branch = 'git rev-parse --abbrev-ref HEAD'.execute().text.trim()
+        if (branch) {
+            sb.append(twoHyphens).append(boundary).append(end)
+            sb.append("Content-Disposition: form-data; name=branch")
+            sb.append(end).append(end)
+            sb.append(branch).append(end)
+        }
+    } catch (Throwable ignored) {
+    }
+
+    sb.append(twoHyphens).append(boundary).append(end)
+    sb.append("Content-Disposition: form-data; name=file;filename=").append(apk.getName())
+    sb.append(end).append(end)
+
+    def dos = new DataOutputStream(conn.getOutputStream())
+    dos.writeBytes(sb.toString())
+    dos.flush()
+    sb.delete(0, sb.length())
+
+    def fis = new FileInputStream(apk)
+    byte[] bf = new byte[8192]
+    int len
+    while ((len = fis.read(bf)) != -1) {
+        dos.write(bf, 0, len)
+    }
+    sb.append(end)
+    sb.append(twoHyphens).append(boundary).append(twoHyphens).append(end)
+    dos.writeBytes(sb.toString())
+
+    dos.flush()
+    fis.close()
+    dos.close()
+
+    def code = conn.getResponseCode()
+    def stream = (code >= 200 && code < 300) ? conn.getInputStream() : conn.getErrorStream()
+    def text = stream != null ? stream.getText("UTF-8") : ""
+    println "HTTP ${code}"
+    println text
+    println "*************** upload finish ***************"
+
+    if (code != 200 && code != 201) {
+        throw new RuntimeException("Zealot upload failed HTTP ${code}: ${text}")
+    }
+
+    try {
+        def resp = new JsonSlurper().parseText(text)
+        def installUrl = resp.install_url ?: (resp.release?.install_url)
+        def releaseUrl = resp.release_url ?: (resp.release?.release_url)
+        if (installUrl) {
+            println("上传成功，下载链接：" + installUrl)
+        }
+        if (releaseUrl) {
+            println("上传成功，发布页：" + releaseUrl)
+        }
+        if (!installUrl && !releaseUrl) {
+            println("上传成功（请在响应 JSON 中查看 install_url）")
+        }
+    } catch (Throwable e) {
+        println("上传成功，但解析响应失败: " + e.message)
+    }
+}
+
+def findApk(Project porject, boolean isRelease) {
+    def curPath = porject.projectDir
+    def candidates = []
+    if (isRelease) {
+        candidates << new File("${curPath}/build/outputs/apk/release")
+    } else {
+        candidates << new File("${curPath}/build/outputs/apk/debug")
+    }
+    candidates << new File("${curPath}/build/outputs/apk")
+
+    File newest = null
+    long newestTime = -1
+    candidates.each { File dir ->
+        if (!dir.exists()) {
+            return
+        }
+        dir.eachFileRecurse { File f ->
+            if (f.isFile() && f.name.endsWith(".apk") && !f.name.endsWith("-unsigned.apk")) {
+                if (f.lastModified() > newestTime) {
+                    newestTime = f.lastModified()
+                    newest = f
+                }
+            }
+        }
+    }
+    if (newest != null) {
+        println "found apk: " + newest.absolutePath
+    }
+    return newest
+}
+
+static def getGitVersionInfo() {
+    def commitId = 'git rev-parse HEAD'.execute().text.trim()
+    def logTxt = 'git log -1 --pretty=format:“%s” ' + commitId
+    def log = logTxt.execute().text.trim().replaceAll("“", "").replaceAll("”", "")
+    println("submit msg: $log")
+    return log
+}
+
+rootProject.subprojects.each { project ->
+    project.afterEvaluate {
+        addUploadTasks(project)
+        addPackTasks(project)
+    }
+}
+
+def addUploadTasks(Project project) {
+    if (project.plugins.findPlugin('com.android.application') == null) {
+        return
+    }
+    println("应用 Zealot upload apk 相关任务到--->" + project.name)
+
+    project.android.applicationVariants.all { variant ->
+        project.tasks.create(name: "uploadApkOf${project.name.capitalize()}${variant.name.capitalize()}"
+                , description: "上传 apk 到 Zealot-${project.name.capitalize()}${variant.name.capitalize()}"
+                , group: "uploadApk") {
+            dependsOn("assemble${variant.name.capitalize()}")
+            doLast {
+                uploadApk("Release".equals(variant.name.capitalize()) || variant.name.toLowerCase().endsWith("release"), project)
+            }
+        }
+    }
+}
+
+def isWindows() {
+    return org.gradle.internal.os.OperatingSystem.current().isWindows()
+}
+
+def addPackTasks(Project project) {
+    if (project.plugins.findPlugin('com.android.application') == null) {
+        return
+    }
+    project.android.applicationVariants.all { variant ->
+        project.tasks.create(name: "pack${variant.name.capitalize()}"
+                , description: "打包-${variant.name.capitalize()}"
+                , group: "pack") {
+            doLast {
+                String path0 = "/gradlew"
+                if (isWindows()) {
+                    path0 = "\\gradlew.bat"
+                }
+                String cmd = rootDir.absolutePath + path0 + " assemble${variant.name.capitalize()}"
+                println("run cmd: " + cmd)
+                try {
+                    exec {
+                        workingDir project.projectDir
+                        commandLine(rootDir.absolutePath + path0, "assemble${variant.name.capitalize()}")
+                    }
+                } catch (Throwable throwable) {
+                    if (!isWindows()) {
+                        println("可能是没有权限,需要在根目录下手动运行 chmod +x gradlew")
+                    }
+                    throw throwable
+                }
+            }
+        }
+    }
+}

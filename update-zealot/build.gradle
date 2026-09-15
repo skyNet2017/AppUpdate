@@ -3,7 +3,7 @@ plugins {
 }
 
 android {
-    //namespace 'com.hss01248.update_pyger'
+    //namespace 'com.hss01248.update_zealot'
     compileSdkVersion 33
 
     defaultConfig {

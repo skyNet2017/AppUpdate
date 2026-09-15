@@ -1,16 +1,35 @@
 apply plugin: 'com.android.application'
 
+def zealotProp = { String key, String defVal ->
+    try {
+        def f = rootProject.file('local.properties')
+        if (f.exists()) {
+            def p = new Properties()
+            p.load(f.newDataInputStream())
+            def v = p.getProperty(key)
+            if (v != null && v.trim()) return v.trim()
+        }
+    } catch (Throwable ignored) {
+    }
+    return defVal
+}
+
 android {
     compileSdkVersion 32
     buildToolsVersion "30.0.3"
     defaultConfig {
         applicationId "com.vector.appupdatedemo2"
-        minSdkVersion 23
+        minSdkVersion 21
         targetSdkVersion 32
         versionCode 1
         versionName "0.1.0"
         multiDexEnabled true
         testInstrumentationRunner 'androidx.test.runner.AndroidJUnitRunner'
+        buildConfigField 'String', 'zealot_endpoint', '"' + zealotProp('zealot_endpoint', 'https://appstore.timefly.art') + '"'
+        buildConfigField 'String', 'zealot_channel_key', '"' + zealotProp('zealot_channel_key', '') + '"'
+        ndk {
+            abiFilters 'arm64-v8a', 'x86_64'
+        }
     }
     buildTypes {
         debug{
@@ -30,13 +49,15 @@ android {
     }
     packagingOptions {
         exclude '**/META-INF/DEPENDENCIES'
+        exclude 'lib/**/libadblockplus-jni.so'
+        exclude 'lib/**/libavif_decoder.so'
     }
 }
 
 dependencies {
 
     implementation project(path: ':update-default')
-    implementation project(path: ':update-pyger')
+    // implementation project(path: ':update-pyger')  // 与 zealot 二选一，勿同时 Startup
     implementation project(path: ':update-zealot')
 
 

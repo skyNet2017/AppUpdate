@@ -18,7 +18,7 @@ import com.blankj.utilcode.util.LogUtils;
 import com.hss01248.feedback.FeedbackUtil;
 import com.hss01248.update_default.AppUpdateUtil;
 import com.hss01248.update_default.UpdateAppDefault;
-import com.hss01248.update_pyger.PygerAppUpdateUtil;
+import com.hss01248.update_zealot.ZealotAppUpdateUtil;
 import com.vector.appupdatedemo.R;
 import com.vector.appupdatedemo.http.OkGoUpdateHttpUtil;
 import com.vector.appupdatedemo.http.UpdateAppHttpUtil;
@@ -627,7 +627,8 @@ public class JavaActivity extends AppCompatActivity {
 
 
     public void pyger(View view) {
-        PygerAppUpdateUtil.doUpdate();
+        // sample 已切到 Zealot；按钮名仍为 pyger 时走 Zealot 检查更新
+        ZealotAppUpdateUtil.doUpdate();
     }
 
     public void pygerFeedback(View view) {

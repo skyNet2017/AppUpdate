@@ -1,10 +1,11 @@
 ## Android 版本更新
 
-本库支持两种更新管理方式，文档已拆分如下：
+本库支持多种更新管理方式，文档已拆分如下：
 
 | 方式 | 说明 | 文档 |
 |------|------|------|
 | 蒲公英平台 | 使用蒲公英发布、版本管理与用户反馈 | [docs/pgyer.md](docs/pgyer.md) |
+| 自建 Zealot | 对接 https://appstore.timefly.art，一键检查更新 + 发版 | [docs/zealot.md](docs/zealot.md) |
 | 普通 JSON 配置 | 自托管 JSON（GitHub raw / CDN / **七牛一键脚本**）做版本检测与发布 | [docs/json-config.md](docs/json-config.md) |
 
 客户端接入细节（默认协议、自定义协议、静默下载等）：
@@ -112,6 +113,7 @@ dependencies {
 - [java方式](docs/java.md)
 - [kotlin方式](docs/kotlin.md)
 - [蒲公英更新管理平台](docs/pgyer.md)
+- [自建 Zealot 一键更新与发版](docs/zealot.md)
 - [普通 JSON 配置文件方式](docs/json-config.md)
 
 #### 进度条使用的是代码家的「[NumberProgressBar](https://github.com/daimajia/NumberProgressBar)」
