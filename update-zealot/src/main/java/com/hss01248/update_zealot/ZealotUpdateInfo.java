@@ -5,7 +5,8 @@ import androidx.annotation.Keep;
 import java.util.List;
 
 /**
- * Zealot GET /api/apps/latest 响应字段（扁平 + 可选嵌套 release）。
+ * Zealot GET /api/apps/latest 响应。
+ * 成功时多为：顶层 app/scheme + {@code releases: [ {...} ]}。
  */
 @Keep
 public class ZealotUpdateInfo {
@@ -13,6 +14,7 @@ public class ZealotUpdateInfo {
     public String app_name;
     public String bundle_id;
     public int version;
+    public Integer id;
     public String release_version;
     public String build_version;
     public String source;
@@ -28,8 +30,11 @@ public class ZealotUpdateInfo {
     public List<ChangelogItem> changelog;
     public String created_at;
 
-    /** 部分版本把 release 嵌在 release 对象里 */
+    /** 部分文档形态：单个 release */
     public ZealotUpdateInfo release;
+
+    /** 实测 6.2.x：releases 数组，取最新一条 */
+    public List<ZealotUpdateInfo> releases;
 
     @Keep
     public static class ChangelogItem {
@@ -40,11 +45,10 @@ public class ZealotUpdateInfo {
     }
 
     public ZealotUpdateInfo effective() {
-        if (release != null && (release_version == null || release_version.isEmpty())) {
-            return release;
+        if (releases != null && !releases.isEmpty() && releases.get(0) != null) {
+            return releases.get(0);
         }
-        if (release != null && (install_url == null || install_url.isEmpty())
-                && release.install_url != null) {
+        if (release != null) {
             return release;
         }
         return this;

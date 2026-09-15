@@ -631,6 +631,11 @@ public class JavaActivity extends AppCompatActivity {
         ZealotAppUpdateUtil.doUpdate();
     }
 
+    public void zealotUpdate(View view) {
+        Toast.makeText(this, "正在检查 Zealot 更新…", Toast.LENGTH_SHORT).show();
+        ZealotAppUpdateUtil.doUpdate();
+    }
+
     public void pygerFeedback(View view) {
         FeedbackUtil.showPygerFeedback("https://www.pgyer.com/YVeW");
     }

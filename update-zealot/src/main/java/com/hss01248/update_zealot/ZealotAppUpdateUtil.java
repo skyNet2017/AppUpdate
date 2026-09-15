@@ -1,6 +1,7 @@
 package com.hss01248.update_zealot;
 
 import android.text.TextUtils;
+import android.util.Log;
 
 import androidx.annotation.Nullable;
 
@@ -15,26 +16,24 @@ import java.net.URLEncoder;
 /**
  * Zealot App 内检查更新入口。
  * <p>
- * 配置来自宿主 BuildConfig：{@code zealot_endpoint}、{@code zealot_channel_key}
- * （由 uploadToZealot.gradle 注入）。token 不进 APK。
+ * Zealot 6.2.x 的 /api/apps/latest 若带 release_version/build_version 会服务端 500，
+ * 因此只传 channel_key，在客户端比较 versionCode。
  */
 public class ZealotAppUpdateUtil {
 
+    private static final String TAG = "update-zealot";
     public static final String DEFAULT_ENDPOINT = "https://appstore.timefly.art";
 
     public static void doUpdate() {
         doUpdate(null, null, new ExceptionHandler() {
             @Override
             public void onException(Exception e) {
+                Log.e(TAG, "doUpdate exception", e);
                 LogUtils.w(e);
             }
         });
     }
 
-    /**
-     * @param endpoint   如 https://appstore.timefly.art；空则读 BuildConfig / 默认
-     * @param channelKey 渠道 key（不是 slug）；空则读 BuildConfig
-     */
     public static void doUpdate(@Nullable String endpoint, @Nullable String channelKey,
                                 ExceptionHandler handler) {
         String[] cfg = readBuildConfig();
@@ -48,22 +47,16 @@ public class ZealotAppUpdateUtil {
             endpoint = DEFAULT_ENDPOINT;
         }
         if (TextUtils.isEmpty(channelKey)) {
+            Log.w(TAG, "未配置 zealot_channel_key，无法发起更新请求");
             LogUtils.w("app更新->未配置 zealot_channel_key，无法发起更新请求");
             return;
         }
 
-        String versionName = AppUtils.getAppVersionName();
-        int versionCode = AppUtils.getAppVersionCode();
-        if (TextUtils.isEmpty(versionName)) {
-            versionName = "0";
-        }
-
         String base = endpoint.endsWith("/") ? endpoint.substring(0, endpoint.length() - 1) : endpoint;
-        String url = base + "/api/apps/latest"
-                + "?channel_key=" + enc(channelKey)
-                + "&release_version=" + enc(versionName)
-                + "&build_version=" + enc(String.valueOf(versionCode));
+        String url = base + "/api/apps/latest?channel_key=" + enc(channelKey);
 
+        Log.i(TAG, "check update local=" + AppUtils.getAppVersionName()
+                + "(" + AppUtils.getAppVersionCode() + ") url=" + url);
         LogUtils.i("zealot check update: " + url);
         new UpdateAppManager
                 .Builder()
@@ -82,7 +75,6 @@ public class ZealotAppUpdateUtil {
         }
     }
 
-    /** @return [endpoint, channelKey] */
     private static String[] readBuildConfig() {
         String endpoint = null;
         String channelKey = null;
@@ -92,7 +84,6 @@ public class ZealotAppUpdateUtil {
         } catch (ClassNotFoundException e) {
             LogUtils.i(e);
             String path = Utils.getApp().getClass().getName();
-            LogUtils.i("application class path: " + path);
             path = path.substring(0, path.lastIndexOf("."));
             try {
                 reflect = Class.forName(path + ".BuildConfig");
@@ -101,15 +92,16 @@ public class ZealotAppUpdateUtil {
             }
         }
         if (reflect == null) {
-            LogUtils.w("没有找到 BuildConfig，拿不到 Zealot 配置");
+            Log.w(TAG, "没有找到 BuildConfig");
             return new String[]{null, null};
         }
         try {
             endpoint = (String) reflect.getDeclaredField("zealot_endpoint").get(null);
             channelKey = (String) reflect.getDeclaredField("zealot_channel_key").get(null);
-            LogUtils.i("get zealot_endpoint/channel_key: " + endpoint + " -> " + channelKey);
+            Log.i(TAG, "BuildConfig endpoint=" + endpoint + " channelKey="
+                    + (channelKey == null ? "null" : channelKey.substring(0, Math.min(8, channelKey.length())) + "..."));
         } catch (Throwable e) {
-            LogUtils.i("app更新->没有配置 Zealot BuildConfig 字段", e);
+            Log.e(TAG, "读 BuildConfig 失败", e);
         }
         return new String[]{endpoint, channelKey};
     }

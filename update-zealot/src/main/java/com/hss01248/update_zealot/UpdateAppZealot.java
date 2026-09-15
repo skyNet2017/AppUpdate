@@ -17,12 +17,14 @@ import com.hss01248.appstartup.api.AppStartUpUtil;
 import com.hss01248.appstartup.api.LogAppStartUpCallback;
 import com.hss01248.update_default.UpdateAppDefault;
 import com.vector.update_app.UpdateAppBean;
+import com.vector.update_app.UpdateAppManager;
 
 import org.json.JSONObject;
 
 import java.io.IOException;
 import java.net.URLEncoder;
 import java.util.Map;
+import java.util.concurrent.TimeUnit;
 
 import okhttp3.Call;
 import okhttp3.OkHttpClient;
@@ -40,7 +42,14 @@ public class UpdateAppZealot extends UpdateAppDefault {
     @Override
     public void asyncGet(@NonNull String url, @NonNull Map<String, String> params, @NonNull final Callback callBack) {
         OkHttpClient client = new OkHttpClient().newBuilder()
-                .addInterceptor(new HttpLoggingInterceptor().setLevel(HttpLoggingInterceptor.Level.BODY))
+                .connectTimeout(30, TimeUnit.SECONDS)
+                .readTimeout(30, TimeUnit.SECONDS)
+                .addInterceptor(new HttpLoggingInterceptor(new HttpLoggingInterceptor.Logger() {
+                    @Override
+                    public void log(String message) {
+                        Log.i(TAG, message);
+                    }
+                }).setLevel(HttpLoggingInterceptor.Level.BODY))
                 .build();
         if (params != null && !params.isEmpty()) {
             if (!url.contains("?")) {
@@ -55,17 +64,22 @@ public class UpdateAppZealot extends UpdateAppDefault {
             }
         }
 
+        final String finalUrl = url;
+        Log.i(TAG, "GET " + finalUrl);
         Request request = new Request.Builder()
-                .get().url(url).build();
+                .get().url(finalUrl).build();
         client.newCall(request).enqueue(new okhttp3.Callback() {
             @Override
             public void onFailure(Call call, IOException e) {
+                Log.e(TAG, "request fail: " + finalUrl, e);
                 callBack.onError(e.getMessage());
             }
 
             @Override
             public void onResponse(Call call, Response response) throws IOException {
                 String json = response.body() != null ? response.body().string() : "";
+                Log.i(TAG, "HTTP " + response.code() + " bodyLen=" + json.length()
+                        + " body=" + (json.length() > 800 ? json.substring(0, 800) + "..." : json));
                 if (!response.isSuccessful()) {
                     callBack.onError(response.code() + "-" + response.message() + " " + json);
                     return;
@@ -79,9 +93,11 @@ public class UpdateAppZealot extends UpdateAppDefault {
                     ZealotUpdateInfo info = GsonUtils.fromJson(json, ZealotUpdateInfo.class);
                     UpdateAppBean bean = new UpdateAppBean();
                     copy(info, bean);
-                    callBack.onResponse(GsonUtils.toJson(bean));
+                    String out = GsonUtils.toJson(bean);
+                    Log.i(TAG, "mapped bean: " + out);
+                    callBack.onResponse(out);
                 } catch (Exception e) {
-                    e.printStackTrace();
+                    Log.e(TAG, "json parse error", e);
                     callBack.onError("json parse error: \n" + e.getMessage() + "\n" + json);
                 }
             }
@@ -92,13 +108,15 @@ public class UpdateAppZealot extends UpdateAppDefault {
         ZealotUpdateInfo info = raw != null ? raw.effective() : null;
         if (info == null) {
             bean.setUpdate("No");
+            Log.w(TAG, "no effective release in response");
             return;
         }
 
         int remoteCode = parseBuildVersion(info.build_version);
         bean.setVersionCode(remoteCode);
         bean.setNewVersion(info.release_version != null ? info.release_version : "");
-        bean.setApkFileUrl(info.install_url != null ? info.install_url : "");
+        String apkUrl = resolveDirectApkUrl(info.install_url);
+        bean.setApkFileUrl(apkUrl);
         bean.setUpdateLog(info.resolveChangelog());
         bean.setConstraint(false);
         if (info.size > 0) {
@@ -109,7 +127,43 @@ public class UpdateAppZealot extends UpdateAppDefault {
         boolean hasNew = remoteCode > localCode;
         bean.setUpdate(hasNew ? "Yes" : "No");
         Log.i(TAG, "local=" + localCode + " remote=" + remoteCode
-                + " version=" + info.release_version + " hasNew=" + hasNew);
+                + " version=" + info.release_version
+                + " install_url=" + info.install_url
+                + " apk_url=" + apkUrl
+                + " hasNew=" + hasNew);
+    }
+
+    /**
+     * 跟随 302，拿到真正的 .apk 直链，供应用内下载器使用（不跳浏览器）。
+     */
+    private static String resolveDirectApkUrl(String installUrl) {
+        if (TextUtils.isEmpty(installUrl)) {
+            return "";
+        }
+        try {
+            OkHttpClient client = new OkHttpClient.Builder()
+                    .followRedirects(true)
+                    .followSslRedirects(true)
+                    .connectTimeout(15, TimeUnit.SECONDS)
+                    .readTimeout(15, TimeUnit.SECONDS)
+                    .build();
+            Request head = new Request.Builder().url(installUrl).head().build();
+            Response resp = client.newCall(head).execute();
+            try {
+                String finalUrl = resp.request().url().toString();
+                Log.i(TAG, "resolve apk url: " + installUrl + " -> " + finalUrl
+                        + " http=" + resp.code()
+                        + " type=" + resp.header("Content-Type"));
+                if (!TextUtils.isEmpty(finalUrl)) {
+                    return finalUrl;
+                }
+            } finally {
+                resp.close();
+            }
+        } catch (Exception e) {
+            Log.w(TAG, "resolveDirectApkUrl fail, use install_url", e);
+        }
+        return installUrl;
     }
 
     private static int parseBuildVersion(String buildVersion) {
@@ -117,7 +171,6 @@ public class UpdateAppZealot extends UpdateAppDefault {
             return 0;
         }
         try {
-            // 兼容 "1002" 或 "1.0.02-1002" 末尾数字
             String s = buildVersion.trim();
             if (s.matches("\\d+")) {
                 return Integer.parseInt(s);
@@ -126,7 +179,11 @@ public class UpdateAppZealot extends UpdateAppDefault {
             if (lastDash >= 0 && s.substring(lastDash + 1).matches("\\d+")) {
                 return Integer.parseInt(s.substring(lastDash + 1));
             }
-            return Integer.parseInt(s.replaceAll("[^0-9]", ""));
+            String digits = s.replaceAll("[^0-9]", "");
+            if (TextUtils.isEmpty(digits)) {
+                return 0;
+            }
+            return Integer.parseInt(digits);
         } catch (Exception e) {
             Log.w(TAG, "parse build_version fail: " + buildVersion, e);
             return 0;
@@ -137,6 +194,9 @@ public class UpdateAppZealot extends UpdateAppDefault {
     @Override
     public String create(@NonNull Context context) {
         super.create(context);
+        // 与蒲公英一致：应用内下载安装，不跳外部浏览器
+        UpdateAppManager.setDownloadByBrowser(false);
+        UpdateAppManager.setGuideToGooglePlay(false);
         AppStartUpUtil.add(new LogAppStartUpCallback() {
             @Override
             public void onFirstActivityCreated(Application app, Activity activity, Bundle savedInstanceState) {
@@ -144,6 +204,7 @@ public class UpdateAppZealot extends UpdateAppDefault {
                 ThreadUtils.getMainHandler().postDelayed(new Runnable() {
                     @Override
                     public void run() {
+                        Log.i(TAG, "startup auto check update");
                         ZealotAppUpdateUtil.doUpdate();
                     }
                 }, 1200);

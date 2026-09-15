@@ -33,7 +33,7 @@
             </intent-filter>
         </activity>
 
-        <activity android:name=".ui.JavaActivity">
+        <activity android:name=".ui.JavaActivity" android:exported="true">
         </activity>
 
     </application>

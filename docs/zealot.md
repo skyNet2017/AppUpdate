@@ -16,6 +16,7 @@ buildscript {
 }
 ```
 
+上传实现与蒲公英脚本相同：`HttpURLConnection` multipart；changelog 等文本字段用 **UTF-8** 写入（不用 `DataOutputStream.writeBytes`，避免中文损坏）。
 在 `local.properties`（勿提交 git）：
 
 ```properties
@@ -57,7 +58,15 @@ zealot_token=用户页底部 API Key
 | 检查最新版 | `GET {endpoint}/api/apps/latest?channel_key=...&release_version={versionName}&build_version={versionCode}` |
 | 发版上传 | `POST {endpoint}/api/apps/upload?token=...` multipart：`channel_key`、`file`、`changelog`、`source=gradle` |
 
-客户端比较远端 `build_version` 与本机 `versionCode`，更大则弹更新；下载地址用响应里的 `install_url`。
+客户端比较远端 `build_version` 与本机 `versionCode`，更大则弹更新。
+
+**下载安装（与蒲公英一致，应用内完成）：**
+
+1. 接口返回的 `install_url` 多为 `/download/releases/{id}`（会 302），库内会 `HEAD` 跟随重定向，解析出真正的 `.apk` 直链  
+2. 强制 `downloadByBrowser=false` / `guideToGooglePlay=false`，由 `DownloadService` 应用内下载后调起系统安装器  
+3. 首次安装需系统「允许来自此来源的应用」授权（跳系统设置，不是浏览器）；宿主需合并 `REQUEST_INSTALL_PACKAGES`（`update-app` 已声明）
+
+**注意（Zealot 6.2.x）：** `GET /api/apps/latest` 若带 `release_version` / `build_version` 会服务端 500（`Release.find_since_version` NameError）。本库只传 `channel_key`，响应里取 `releases[0]` 再本地比较。
 
 ## 手动触发检查更新
 

@@ -98,6 +98,15 @@
             />
 
         <Button
+            android:id="@+id/btn_zealot"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_margin="16dp"
+            android:onClick="zealotUpdate"
+            android:text="Zealot检查更新"
+            />
+
+        <Button
             android:id="@+id/btn_feedback"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"

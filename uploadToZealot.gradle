@@ -9,11 +9,12 @@ import groovy.json.JsonSlurper
 //   zealot_use_local=true                          （本仓库调试用，依赖 :update-zealot）
 //
 // 根 build.gradle：
-//   apply from: 'uploadToZealot.gradle'
-// 或：
-//   apply from: 'https://raw.githubusercontent.com/skyNet2017/AppUpdate/master/uploadToZealot.gradle'
+//   buildscript {
+//     apply from: 'uploadToZealot.gradle'
+//   }
 //
 // 勿与 uploadToPyger.gradle / uploadToQiniu.gradle 同时 apply。
+// 上传使用 HttpURLConnection multipart；文本字段用 UTF-8，避免中文 changelog 损坏。
 
 def propOrLocal(String key) {
     try {
@@ -116,11 +117,9 @@ gradle.addProjectEvaluationListener(new ProjectEvaluationListener() {
 
 /**
  * 上传 APK 到 Zealot POST /api/apps/upload
+ * 与 uploadToPyger 相同用 HttpURLConnection；文本用 UTF-8 字节写入（勿用 writeBytes）。
  */
 def uploadApk(boolean isRelease, Project porject) {
-    def curPath = porject.projectDir
-    println "curPath:" + curPath
-
     def apk = findApk(porject, isRelease)
     if (apk == null) {
         throw new RuntimeException("apk file not exists under build/outputs/apk")
@@ -137,15 +136,30 @@ def uploadApk(boolean isRelease, Project porject) {
     }
 
     def uploadUrl = endpoint + "/api/apps/upload?token=" + URLEncoder.encode(token, "UTF-8")
+    def changelog = getGitVersionInfo()
+    if (changelog == null || changelog.trim().isEmpty()) {
+        changelog = "gradle upload"
+    }
+    if (changelog.length() > 500) {
+        changelog = changelog.substring(0, 500)
+    }
+
     println "*************** start upload to Zealot ***************"
     println "url: ${endpoint}/api/apps/upload?token=***"
     println "channel_key: ${channelKey.take(8)}..."
     println "file: ${apk.absolutePath}"
 
+    def commit = ""
+    def branch = ""
+    try {
+        commit = 'git rev-parse HEAD'.execute().text.trim()
+        branch = 'git rev-parse --abbrev-ref HEAD'.execute().text.trim()
+    } catch (Throwable ignored) {
+    }
+
     def twoHyphens = "--"
     def boundary = "*********"
     def end = "\r\n"
-    def changelog = getGitVersionInfo()
 
     def conn = new URL(uploadUrl).openConnection()
     conn.setRequestMethod('POST')
@@ -157,63 +171,40 @@ def uploadApk(boolean isRelease, Project porject) {
     conn.setDoInput(true)
     conn.setDoOutput(true)
 
-    def sb = new StringBuilder()
-
-    sb.append(twoHyphens).append(boundary).append(end)
-    sb.append("Content-Disposition: form-data; name=channel_key")
-    sb.append(end).append(end)
-    sb.append(channelKey).append(end)
-
-    sb.append(twoHyphens).append(boundary).append(end)
-    sb.append("Content-Disposition: form-data; name=source")
-    sb.append(end).append(end)
-    sb.append("gradle").append(end)
-
-    sb.append(twoHyphens).append(boundary).append(end)
-    sb.append("Content-Disposition: form-data; name=changelog")
-    sb.append(end).append(end)
-    sb.append(changelog).append(end)
-
-    try {
-        def commit = 'git rev-parse HEAD'.execute().text.trim()
-        if (commit) {
-            sb.append(twoHyphens).append(boundary).append(end)
-            sb.append("Content-Disposition: form-data; name=git_commit")
-            sb.append(end).append(end)
-            sb.append(commit).append(end)
-        }
-        def branch = 'git rev-parse --abbrev-ref HEAD'.execute().text.trim()
-        if (branch) {
-            sb.append(twoHyphens).append(boundary).append(end)
-            sb.append("Content-Disposition: form-data; name=branch")
-            sb.append(end).append(end)
-            sb.append(branch).append(end)
-        }
-    } catch (Throwable ignored) {
+    def os = conn.getOutputStream()
+    def writeUtf8 = { String s -> os.write(s.getBytes("UTF-8")) }
+    def writeField = { String name, String value ->
+        writeUtf8(twoHyphens + boundary + end)
+        writeUtf8("Content-Disposition: form-data; name=\"" + name + "\"" + end + end)
+        writeUtf8(value + end)
     }
 
-    sb.append(twoHyphens).append(boundary).append(end)
-    sb.append("Content-Disposition: form-data; name=file;filename=").append(apk.getName())
-    sb.append(end).append(end)
+    writeField("channel_key", channelKey)
+    writeField("source", "gradle")
+    writeField("changelog", changelog)
+    if (commit) {
+        writeField("git_commit", commit)
+    }
+    if (branch) {
+        writeField("branch", branch)
+    }
 
-    def dos = new DataOutputStream(conn.getOutputStream())
-    dos.writeBytes(sb.toString())
-    dos.flush()
-    sb.delete(0, sb.length())
+    writeUtf8(twoHyphens + boundary + end)
+    writeUtf8("Content-Disposition: form-data; name=\"file\"; filename=\"" + apk.getName() + "\"" + end)
+    writeUtf8("Content-Type: application/vnd.android.package-archive" + end + end)
 
     def fis = new FileInputStream(apk)
     byte[] bf = new byte[8192]
     int len
     while ((len = fis.read(bf)) != -1) {
-        dos.write(bf, 0, len)
+        os.write(bf, 0, len)
     }
-    sb.append(end)
-    sb.append(twoHyphens).append(boundary).append(twoHyphens).append(end)
-    dos.writeBytes(sb.toString())
-
-    dos.flush()
     fis.close()
-    dos.close()
+
+    writeUtf8(end)
+    writeUtf8(twoHyphens + boundary + twoHyphens + end)
+    os.flush()
+    os.close()
 
     def code = conn.getResponseCode()
     def stream = (code >= 200 && code < 300) ? conn.getInputStream() : conn.getErrorStream()
