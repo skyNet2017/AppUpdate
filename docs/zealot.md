@@ -24,7 +24,7 @@ zealot_endpoint=https://appstore.timefly.art
 zealot_channel_key=渠道详情里的 Key
 zealot_token=用户页底部 API Key
 # 可选：jitpack 版本（外部工程）
-# zealot_lib_version=4.2.0
+# zealot_lib_version=5.0.0
 # 本仓库调试强制用本地模块：
 # zealot_use_local=true
 ```
@@ -40,7 +40,7 @@ zealot_token=用户页底部 API Key
 1. 应用 module 自动依赖 `update-zealot`，启动约 1.2s 后检查更新并弹窗  
 2. Android Studio Gradle 面板 → `uploadApk` → `uploadApkOf{Module}{Variant}` 一键打包上传  
 
-本仓库根工程若包含 `:update-zealot`，脚本默认走 `project(':update-zealot')`（无需等 jitpack tag）。外部工程走 `com.github.skyNet2017.AppUpdate:update-zealot:4.2.0`（需打对应 tag）。
+本仓库根工程若包含 `:update-zealot`，脚本默认走 `project(':update-zealot')`（无需等 jitpack tag）。外部工程走 `com.github.skyNet2017.AppUpdate:update-zealot:5.0.0`（需打对应 tag）。
 
 ## slug 与 channel_key
 
@@ -84,12 +84,12 @@ ZealotAppUpdateUtil.doUpdate(
 ## 依赖（不经过脚本时）
 
 ```groovy
-api 'com.github.skyNet2017.AppUpdate:update-zealot:4.2.0'
+api 'com.github.skyNet2017.AppUpdate:update-zealot:5.0.0'
 // 并自行写入 BuildConfig.zealot_endpoint / zealot_channel_key
 ```
 
 ## 发版给其他 App 用
 
-1. 合并本仓库改动后打 git tag（如 `4.2.0`）并 push  
+1. 合并本仓库改动后打 git tag（如 `5.0.0`）并 push  
 2. 外部工程 apply 远程 `uploadToZealot.gradle`，配置 `local.properties`  
 3. 若 jitpack 尚未构建成功，可临时 `zealot_lib_version` 指向已有 tag，或先用本仓库 `composite` / `mavenLocal`

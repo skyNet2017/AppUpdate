@@ -3,5 +3,5 @@
 zealot_endpoint=https://appstore.timefly.art
 zealot_channel_key=你的渠道Key
 zealot_token=你的用户API_Key
-# zealot_lib_version=4.2.0
+# zealot_lib_version=5.0.0
 # zealot_use_local=true
