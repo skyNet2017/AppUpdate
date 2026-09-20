@@ -207,7 +207,7 @@ public class UpdateAppZealot extends UpdateAppDefault {
                         Log.i(TAG, "startup auto check update");
                         ZealotAppUpdateUtil.doUpdate();
                     }
-                }, 1200);
+                }, 3200);
             }
         });
         return "zealot updater";

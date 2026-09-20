@@ -141,7 +141,7 @@ public class UpdateAppPgyer extends UpdateAppDefault {
                     public void run() {
                         PygerAppUpdateUtil.doUpdate();
                     }
-                },1200);
+                },3200);
             }
         });
         return "pyger updater";
