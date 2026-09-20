@@ -15,7 +15,6 @@ import android.widget.Toast;
 import androidx.appcompat.app.AppCompatActivity;
 
 import com.blankj.utilcode.util.LogUtils;
-import com.hss01248.feedback.FeedbackUtil;
 import com.hss01248.update_default.AppUpdateUtil;
 import com.hss01248.update_default.UpdateAppDefault;
 import com.hss01248.update_zealot.ZealotAppUpdateUtil;
@@ -636,10 +635,6 @@ public class JavaActivity extends AppCompatActivity {
         ZealotAppUpdateUtil.doUpdate();
     }
 
-    public void pygerFeedback(View view) {
-        FeedbackUtil.showPygerFeedback("https://www.pgyer.com/YVeW");
-    }
-
     public void updateMannual(View view) {
         AppUpdateUtil.config(new IGetParam() {
             @Override
@@ -647,7 +642,7 @@ public class JavaActivity extends AppCompatActivity {
                 return "89767778869";
             }
         });
-        AppUpdateUtil.updateByClickBtn("http://kodo.hss01248.tech/apk/new_version_ios_test.json");
+        AppUpdateUtil.updateByClickBtn("https://kodo.example.com/apk/new_version_ios_test.json");
     }
 
     public void checkUpdate(View view) {

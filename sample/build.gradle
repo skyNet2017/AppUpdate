@@ -71,10 +71,7 @@ dependencies {
 
 //    compile project(':update-app')
 
-    api project(':http')
-
     api project(':update-default')
-    api project(':feedback')
 
     //compile 'com.qianwen:update-app-kotlin:1.1.0'
     //okgo

@@ -28,7 +28,6 @@ buildscript {
         google()
         maven { url 'https://jitpack.io' }
         maven { url 'https://maven.aliyun.com/repository/jcenter' }
-        maven { url 'https://nexus.hss01248.tech/repository/maven-releases/' }
     }
     dependencies {
         classpath 'com.android.tools.build:gradle:7.1.2'
@@ -44,9 +43,8 @@ allprojects {
         mavenCentral()
         google()
         maven { url 'https://jitpack.io' }
-        maven { url 'https://maven.aliyun.com/repository/jcenter' }
-        maven { url 'https://nexus.hss01248.tech/repository/maven-releases/' }
         maven { url 'https://github.com/link-u/AndroidGlideAvifDecoder/raw/master/repository' }
+        maven { url 'https://maven.aliyun.com/repository/jcenter' }
     }
     tasks.withType(Javadoc) {
         options {

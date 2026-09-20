@@ -55,7 +55,6 @@ gradle.addProjectEvaluationListener(new ProjectEvaluationListener() {
         }
         project.repositories {
             maven { url 'https://jitpack.io' }
-            maven { url 'https://nexus.hss01248.tech/repository/maven-releases/' }
         }
         project.dependencies {
             api 'com.github.skyNet2017.AppUpdate:update-pyger:4.1.8'

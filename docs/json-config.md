@@ -62,7 +62,7 @@ qiniu_cdn_domain=https://kodo.example.com
 本地 dry-run（只打包并生成 JSON，**不上传**）：
 
 ```bash
-./gradlew :sample:uploadApkOfSampleDebug -Pqiniu_dry_run=true -Pqiniu_cdn_domain=https://kodo.hss01248.tech
+./gradlew :sample:uploadApkOfSampleDebug -Pqiniu_dry_run=true -Pqiniu_cdn_domain=https://kodo.example.com
 ```
 
 生成的 JSON 在 `sample/build/qiniu-update/update.json`。
@@ -136,11 +136,11 @@ APK 也可直接放在 GitHub 上；国内可通过 jsDelivr 加速访问。
   "new_version": "1.1.00",
   "version_code": 2000,
   "app_store_id": "jufjj89",
-  "app_store_link": "http://kodo.hss01248.tech/ai/app-release.apk",
-  "apk_file_url": "http://kodo.hss01248.tech/ai/app-release.apk",
-  "file_url_mac": "http://kodo.hss01248.tech/ai/MyChatAI-release.dmg",
-  "file_url_win": "http://kodo.hss01248.tech/ai/MyChatAI-release.exe",
-  "file_url_ios": "http://kodo.hss01248.tech/ai/MyChatAI-release.dpa",
+  "app_store_link": "http://kodo.example.com/ai/app-release.apk",
+  "apk_file_url": "http://kodo.example.com/ai/app-release.apk",
+  "file_url_mac": "http://kodo.example.com/ai/MyChatAI-release.dmg",
+  "file_url_win": "http://kodo.example.com/ai/MyChatAI-release.exe",
+  "file_url_ios": "http://kodo.example.com/ai/MyChatAI-release.dpa",
   "update_log": "1. android webview优化,可录音 \r\n",
   "target_size": "25M",
   "show_dialog_when_app_start": false,
@@ -155,11 +155,11 @@ APK 也可直接放在 GitHub 上；国内可通过 jsDelivr 加速访问。
     "new_version": "2.1.00",
     "version_code": 2100,
     "app_store_id": "jufjj89",
-    "app_store_link": "http://kodo.hss01248.tech/ai/app-release.apk",
-    "apk_file_url": "http://kodo.hss01248.tech/ai/app-release.apk",
-    "file_url_mac": "http://kodo.hss01248.tech/ai/MyChatAI-release.dmg",
-    "file_url_win": "http://kodo.hss01248.tech/ai/MyChatAI-release.exe",
-    "file_url_ios": "http://kodo.hss01248.tech/ai/MyChatAI-release.dpa",
+    "app_store_link": "http://kodo.example.com/ai/app-release.apk",
+    "apk_file_url": "http://kodo.example.com/ai/app-release.apk",
+    "file_url_mac": "http://kodo.example.com/ai/MyChatAI-release.dmg",
+    "file_url_win": "http://kodo.example.com/ai/MyChatAI-release.exe",
+    "file_url_ios": "http://kodo.example.com/ai/MyChatAI-release.dpa",
     "update_log": "1. android webview优化,可录音abtest \r\n",
     "target_size": "26M",
     "show_dialog_when_app_start": true,

@@ -1,6 +1,6 @@
-# 基于蒲公英的 App 更新与用户反馈
+# 基于蒲公英的 App 更新
 
-将[蒲公英](https://www.pgyer.com/)作为更新管理平台时，可使用本仓库提供的 `update-pyger` / `update-default` / `feedback` 模块，完成发布、版本检测与用户反馈。
+将[蒲公英](https://www.pgyer.com/)作为更新管理平台时，可使用本仓库提供的 `update-pyger` / `update-default` 模块，完成发布与版本检测。
 
 ## 依赖
 
@@ -45,15 +45,3 @@ PygerAppUpdateUtil.doUpdate("key", "token", new ExceptionHandler() {
 ```
 
 ![蒲公英更新示意](https://cdn.jsdelivr.net/gh/shuiniuhss/myimages@main/imagemac3/image-20230130120530421.png)
-
-## 用户反馈
-
-```groovy
-api 'com.github.skyNet2017.AppUpdate:feedback:4.0.6'
-```
-
-```java
-FeedbackUtil.showPygerFeedback("https://www.pgyer.com/YVeW");
-```
-
-![蒲公英反馈示意](https://cdn.jsdelivr.net/gh/shuiniuhss/myimages@main/imagemac3/image-20230130120502987.png)

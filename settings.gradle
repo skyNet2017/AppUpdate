@@ -1,8 +1,6 @@
 include ':sample'
 include ':update-app'
 //include ':update-app-kotlin'
-include ':http'
 include ':update-default'
-include ':feedback'
 include ':update-pyger'
 include ':update-zealot'

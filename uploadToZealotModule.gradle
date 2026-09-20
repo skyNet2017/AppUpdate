@@ -6,13 +6,13 @@ import groovy.json.JsonSlurper
 //   apply plugin: 'com.android.application'
 //   ext.zealot_channel_key = '该应用渠道 Key'   // 必填；不是 slug
 //   // ext.zealot_endpoint = 'https://appstore.timefly.art'  // 可选，覆盖 local.properties
-//   // ext.zealot_lib_version = '5.0.1'
+//   // ext.zealot_lib_version = '5.0.0'
 //   apply from: 'https://raw.githubusercontent.com/skyNet2017/AppUpdate/master/uploadToZealotModule.gradle'
 //
 // local.properties（根工程，勿提交 git）：
 //   zealot_token=用户 API Key（仅上传用，不进 APK）
 //   zealot_endpoint=https://appstore.timefly.art   （可选）
-//   zealot_lib_version=5.0.1                       （可选）
+//   zealot_lib_version=5.0.0                       （可选）
 //   zealot_use_local=true                          （本仓库调试用）
 //
 // 上传：HttpURLConnection multipart；文本 UTF-8。
@@ -106,7 +106,7 @@ def zealotToken() {
 
 def zealotLibVersion() {
     def v = propModuleOrLocal("zealot_lib_version")
-    return (v == null || v.isEmpty()) ? "5.0.1" : v
+    return (v == null || v.isEmpty()) ? "5.0.0" : v
 }
 
 def zealotUseLocal() {
@@ -128,7 +128,6 @@ def configureZealotForThisModule() {
 
     project.repositories {
         maven { url 'https://jitpack.io' }
-        maven { url 'https://nexus.hss01248.tech/repository/maven-releases/' }
     }
 
     boolean useLocal = zealotUseLocal()

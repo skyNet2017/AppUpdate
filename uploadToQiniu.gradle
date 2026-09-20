@@ -13,7 +13,7 @@ import java.util.Base64
 // 发布后的 app 可通过 AppUpdateUtil.doUpdate() 零配置检测更新
 //
 // Dry-run（不实际上传）:
-//   ./gradlew :sample:uploadApkOfSampleDebug -Pqiniu_dry_run=true -Pqiniu_cdn_domain=https://kodo.hss01248.tech
+//   ./gradlew :sample:uploadApkOfSampleDebug -Pqiniu_dry_run=true -Pqiniu_cdn_domain=https://kodo.example.com
 //
 // 注意：勿与 uploadToPyger.gradle 同时 apply 到同一工程
 
@@ -289,7 +289,7 @@ def uploadApkAndJson(Project project, def variant) {
     def domain = normalizeDomain(qiniuCdnDomain())
     if (!domain) {
         if (dryRun) {
-            domain = "https://kodo.hss01248.tech"
+            domain = "https://kodo.example.com"
             println "[dry-run] qiniu_cdn_domain 未配置，使用示例域名: ${domain}"
         } else {
             throw new RuntimeException("七牛 CDN 域名未配置，请在 local.properties 中设置 qiniu_cdn_domain（下载访问域名，不是上传域名），例如 https://kodo.example.com")
@@ -365,7 +365,6 @@ gradle.addProjectEvaluationListener(new ProjectEvaluationListener() {
         }
         project.repositories {
             maven { url 'https://jitpack.io' }
-            maven { url 'https://nexus.hss01248.tech/repository/maven-releases/' }
         }
         project.dependencies {
             // 含无参 AppUpdateUtil.doUpdate() 的版本；发布后请与仓库 tag 对齐
