@@ -15,6 +15,8 @@ import groovy.json.JsonSlurper
 //
 // 勿与 uploadToPyger.gradle / uploadToQiniu.gradle 同时 apply。
 // 上传使用 HttpURLConnection multipart；文本字段用 UTF-8，避免中文 changelog 损坏。
+// 找包：android/.../build/outputs/apk 与 Flutter {root}/build/app/outputs（如 mobile/build/app/outputs）。
+// upload/pack 任务：clean → assemble →（upload）上传。
 
 def propOrLocal(String key) {
     try {
@@ -122,7 +124,7 @@ gradle.addProjectEvaluationListener(new ProjectEvaluationListener() {
 def uploadApk(boolean isRelease, Project porject) {
     def apk = findApk(porject, isRelease)
     if (apk == null) {
-        throw new RuntimeException("apk file not exists under build/outputs/apk")
+        throw new RuntimeException("apk file not exists（已扫描 android/.../build/outputs/apk 与 Flutter build/app/outputs）")
     }
 
     def endpoint = zealotEndpoint()
@@ -235,35 +237,128 @@ def uploadApk(boolean isRelease, Project porject) {
     }
 }
 
-def findApk(Project porject, boolean isRelease) {
-    def curPath = porject.projectDir
-    def candidates = []
-    if (isRelease) {
-        candidates << new File("${curPath}/build/outputs/apk/release")
-    } else {
-        candidates << new File("${curPath}/build/outputs/apk/debug")
-    }
-    candidates << new File("${curPath}/build/outputs/apk")
+/**
+ * 收集 APK 扫描目录：
+ * 1) 原生 AGP：android/app/build/outputs/apk
+ * 2) Flutter：{flutterRoot}/build/app/outputs（含 flutter-apk、apk）
+ *    常见布局 mobile/android/app → Flutter 根为 mobile/
+ */
+def apkSearchDirs(Project project, boolean isRelease) {
+    def flavor = isRelease ? "release" : "debug"
+    def dirs = [] as LinkedHashSet
+    def appDir = project.projectDir
 
-    File newest = null
-    long newestTime = -1
-    candidates.each { File dir ->
+    dirs << new File(appDir, "build/outputs/apk/${flavor}")
+    dirs << new File(appDir, "build/outputs/apk")
+
+    def flutterRoots = [] as LinkedHashSet
+    try {
+        // android/ → 上一级为 Flutter 工程根（如 mobile/）
+        if (project.rootProject?.projectDir != null) {
+            flutterRoots << project.rootProject.projectDir.parentFile
+        }
+    } catch (Throwable ignored) {
+    }
+    // android/app → ../../ 亦为 Flutter 根
+    try {
+        if (appDir?.parentFile?.parentFile != null) {
+            flutterRoots << appDir.parentFile.parentFile
+        }
+    } catch (Throwable ignored) {
+    }
+
+    flutterRoots.each { File fr ->
+        if (fr == null || !fr.exists()) {
+            return
+        }
+        dirs << new File(fr, "build/app/outputs/flutter-apk")
+        dirs << new File(fr, "build/app/outputs/apk/${flavor}")
+        dirs << new File(fr, "build/app/outputs/apk")
+        dirs << new File(fr, "build/app/outputs")
+    }
+    return dirs
+}
+
+def findApk(Project porject, boolean isRelease) {
+    def flavorHint = isRelease ? "release" : "debug"
+    def agpRootPath = new File(porject.projectDir, "build/outputs/apk").absolutePath
+    def agpMatched = []
+    def flutterMatched = []
+    def others = []
+
+    apkSearchDirs(porject, isRelease).each { File dir ->
         if (!dir.exists()) {
             return
         }
+        println "scan apk dir: " + dir.absolutePath
         dir.eachFileRecurse { File f ->
-            if (f.isFile() && f.name.endsWith(".apk") && !f.name.endsWith("-unsigned.apk")) {
-                if (f.lastModified() > newestTime) {
-                    newestTime = f.lastModified()
-                    newest = f
-                }
+            if (!f.isFile() || !f.name.endsWith(".apk") || f.name.endsWith("-unsigned.apk")) {
+                return
+            }
+            def pathLower = f.absolutePath.toLowerCase()
+            def nameLower = f.name.toLowerCase()
+            boolean hitFlavor = nameLower.contains(flavorHint) || pathLower.contains("/${flavorHint}/") || pathLower.contains("\\${flavorHint}\\")
+            boolean underAgp = f.absolutePath.startsWith(agpRootPath)
+            if (hitFlavor && underAgp) {
+                agpMatched << f
+            } else if (hitFlavor) {
+                flutterMatched << f
+            } else {
+                others << f
             }
         }
     }
+
+    def pickNewest = { List files ->
+        File newest = null
+        long newestTime = -1
+        files.each { File f ->
+            if (f.lastModified() > newestTime) {
+                newestTime = f.lastModified()
+                newest = f
+            }
+        }
+        return newest
+    }
+
+    // 优先 AGP 产物，再 Flutter build/app/outputs，最后其它
+    File newest = pickNewest(agpMatched)
+    if (newest == null) {
+        newest = pickNewest(flutterMatched)
+    }
+    if (newest == null) {
+        newest = pickNewest(others)
+    }
     if (newest != null) {
         println "found apk: " + newest.absolutePath
+        ensureCopiedToAgpOutputs(porject, isRelease, newest)
     }
     return newest
+}
+
+/** 若 APK 不在 app/build/outputs/apk 下，复制到该目录再上传（仍返回原文件用于上传）。 */
+def ensureCopiedToAgpOutputs(Project project, boolean isRelease, File apk) {
+    try {
+        def flavor = isRelease ? "release" : "debug"
+        def agpDir = new File(project.projectDir, "build/outputs/apk/${flavor}")
+        def agpRoot = new File(project.projectDir, "build/outputs/apk")
+        def underAgp = apk.absolutePath.startsWith(agpRoot.absolutePath)
+        if (underAgp) {
+            return
+        }
+        if (!agpDir.exists()) {
+            agpDir.mkdirs()
+        }
+        def dest = new File(agpDir, apk.name)
+        java.nio.file.Files.copy(
+                apk.toPath(),
+                dest.toPath(),
+                java.nio.file.StandardCopyOption.REPLACE_EXISTING
+        )
+        println "copied flutter apk -> " + dest.absolutePath
+    } catch (Throwable e) {
+        println "copy apk to AGP outputs skipped: " + e.message
+    }
 }
 
 static def getGitVersionInfo() {
@@ -288,19 +383,21 @@ def addUploadTasks(Project project) {
     println("应用 Zealot upload apk 相关任务到--->" + project.name)
 
     project.android.applicationVariants.all { variant ->
+        def assembleName = "assemble${variant.name.capitalize()}"
         project.tasks.create(name: "uploadApkOf${project.name.capitalize()}${variant.name.capitalize()}"
                 , description: "上传 apk 到 Zealot-${project.name.capitalize()}${variant.name.capitalize()}"
                 , group: "uploadApk") {
-            dependsOn("assemble${variant.name.capitalize()}")
+            // 打包前先 clean，再 assemble（mustRunAfter 保证顺序）
+            dependsOn("clean", assembleName)
             doLast {
                 uploadApk("Release".equals(variant.name.capitalize()) || variant.name.toLowerCase().endsWith("release"), project)
             }
         }
+        def assembleTask = project.tasks.findByName(assembleName)
+        if (assembleTask != null) {
+            assembleTask.mustRunAfter("clean")
+        }
     }
-}
-
-def isWindows() {
-    return org.gradle.internal.os.OperatingSystem.current().isWindows()
 }
 
 def addPackTasks(Project project) {
@@ -308,28 +405,15 @@ def addPackTasks(Project project) {
         return
     }
     project.android.applicationVariants.all { variant ->
+        def assembleName = "assemble${variant.name.capitalize()}"
         project.tasks.create(name: "pack${variant.name.capitalize()}"
                 , description: "打包-${variant.name.capitalize()}"
                 , group: "pack") {
-            doLast {
-                String path0 = "/gradlew"
-                if (isWindows()) {
-                    path0 = "\\gradlew.bat"
-                }
-                String cmd = rootDir.absolutePath + path0 + " assemble${variant.name.capitalize()}"
-                println("run cmd: " + cmd)
-                try {
-                    exec {
-                        workingDir project.projectDir
-                        commandLine(rootDir.absolutePath + path0, "assemble${variant.name.capitalize()}")
-                    }
-                } catch (Throwable throwable) {
-                    if (!isWindows()) {
-                        println("可能是没有权限,需要在根目录下手动运行 chmod +x gradlew")
-                    }
-                    throw throwable
-                }
-            }
+            dependsOn("clean", assembleName)
+        }
+        def assembleTask = project.tasks.findByName(assembleName)
+        if (assembleTask != null) {
+            assembleTask.mustRunAfter("clean")
         }
     }
 }

@@ -38,7 +38,16 @@ zealot_token=用户页底部 API Key
 配置后：
 
 1. 应用 module 自动依赖 `update-zealot`，启动约 1.2s 后检查更新并弹窗  
-2. Android Studio Gradle 面板 → `uploadApk` → `uploadApkOf{Module}{Variant}` 一键打包上传  
+2. Android Studio Gradle 面板 → `uploadApk` → `uploadApkOf{Module}{Variant}` 一键 **clean → assemble → 上传**  
+
+找包路径（取最新匹配的 `.apk`）：
+
+| 场景 | 目录 |
+|------|------|
+| 原生 / AGP | `{app}/build/outputs/apk/{debug\|release}` |
+| Flutter | `{flutterRoot}/build/app/outputs/flutter-apk` 与 `.../apk`（如 `mobile/build/app/outputs`） |
+
+若 APK 只在 Flutter 输出目录，会再复制一份到 AGP 常规 `build/outputs/apk` 便于核对，上传用找到的文件。
 
 本仓库根工程若包含 `:update-zealot`，脚本默认走 `project(':update-zealot')`（无需等 jitpack tag）。外部工程走 `com.github.skyNet2017.AppUpdate:update-zealot:5.0.0`（需打对应 tag）。
 
