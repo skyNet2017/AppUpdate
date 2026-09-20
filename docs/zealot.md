@@ -27,7 +27,7 @@ zealot_endpoint=https://appstore.timefly.art
 zealot_channel_key=渠道详情里的 Key
 zealot_token=用户页底部 API Key
 # 可选：jitpack 版本（外部工程）
-# zealot_lib_version=5.0.0
+# zealot_lib_version=5.0.2
 # 本仓库调试强制用本地模块：
 # zealot_use_local=true
 ```
@@ -41,7 +41,7 @@ apply plugin: 'com.android.application'
 
 ext.zealot_channel_key = '该应用自己的渠道 Key'  // 必填；不是 slug
 // ext.zealot_endpoint = 'https://appstore.timefly.art'  // 可选，覆盖 local.properties
-// ext.zealot_lib_version = '5.0.0'
+// ext.zealot_lib_version = '5.0.2'
 
 apply from: 'https://raw.githubusercontent.com/skyNet2017/AppUpdate/master/uploadToZealotModule.gradle'
 // 本仓库本地调试也可：
@@ -53,7 +53,7 @@ apply from: 'https://raw.githubusercontent.com/skyNet2017/AppUpdate/master/uploa
 ```properties
 zealot_endpoint=https://appstore.timefly.art
 zealot_token=用户页底部 API Key
-# zealot_lib_version=5.0.0
+# zealot_lib_version=5.0.2
 # zealot_use_local=true
 ```
 
@@ -91,7 +91,7 @@ zealot_token=用户页底部 API Key
 
 若 APK 只在 Flutter 输出目录，会再复制一份到 AGP 常规 `build/outputs/apk` 便于核对，上传用找到的文件。
 
-本仓库根工程若包含 `:update-zealot`，脚本默认走 `project(':update-zealot')`（无需等 jitpack tag）。外部工程走 `com.github.skyNet2017.AppUpdate:update-zealot:5.0.0`（需打对应 tag）。
+本仓库根工程若包含 `:update-zealot`，脚本默认走 `project(':update-zealot')`（无需等 jitpack tag）。外部工程走 `com.github.skyNet2017.AppUpdate:update-zealot:5.0.2`（需打对应 tag）。
 
 ## slug 与 channel_key
 
@@ -135,13 +135,13 @@ ZealotAppUpdateUtil.doUpdate(
 ## 依赖（不经过脚本时）
 
 ```groovy
-api 'com.github.skyNet2017.AppUpdate:update-zealot:5.0.0'
+api 'com.github.skyNet2017.AppUpdate:update-zealot:5.0.2'
 // 并自行写入 BuildConfig.zealot_endpoint / zealot_channel_key
 ```
 
 ## 发版给其他 App 用
 
-1. 合并本仓库改动后打 git tag（如 `5.0.0`）并 push  
+1. 合并本仓库改动后打 git tag（如 `5.0.2`）并 push  
 2. 外部工程：单 app 用远程 `uploadToZealot.gradle`；多 app 用远程 `uploadToZealotModule.gradle` + 各 module `ext.zealot_channel_key`  
 3. 配置 `local.properties` 中的 `zealot_token`（及可选 `zealot_endpoint`）  
 4. 若 jitpack 尚未构建成功，可临时 `zealot_lib_version` 指向已有 tag，或先用本仓库 `composite` / `mavenLocal`

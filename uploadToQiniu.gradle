@@ -368,7 +368,7 @@ gradle.addProjectEvaluationListener(new ProjectEvaluationListener() {
         }
         project.dependencies {
             // 含无参 AppUpdateUtil.doUpdate() 的版本；发布后请与仓库 tag 对齐
-            api 'com.github.skyNet2017.AppUpdate:update-default:4.1.9'
+            api 'com.github.skyNet2017.AppUpdate:update-default:5.0.2'
         }
 
         def domain = normalizeDomain(qiniuCdnDomain())

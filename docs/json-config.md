@@ -18,7 +18,7 @@ buildscript {
 
 脚本会自动为 `com.android.application` 模块：
 
-- 注入依赖 `com.github.skyNet2017.AppUpdate:update-default:4.1.9`
+- 注入依赖 `com.github.skyNet2017.AppUpdate:update-default:5.0.2`
 - 写入 `BuildConfig.update_json_url`（固定 JSON 地址）
 - 注册 `uploadApk` 组任务
 

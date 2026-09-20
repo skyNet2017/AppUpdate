@@ -5,13 +5,13 @@
 ## 依赖
 
 ```groovy
-api 'com.github.skyNet2017.AppUpdate:update-pyger:4.1.8'
+api 'com.github.skyNet2017.AppUpdate:update-pyger:5.0.2'
 ```
 
 或使用默认封装：
 
 ```groovy
-api 'com.github.skyNet2017.AppUpdate:update-default:4.0.6'
+api 'com.github.skyNet2017.AppUpdate:update-default:5.0.2'
 ```
 
 ## 一键发布与更新脚本
