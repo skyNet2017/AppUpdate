@@ -1,10 +1,14 @@
 # 基于自建 Zealot 的 App 更新与发版
 
-将 [Zealot](https://github.com/tryzealot/zealot)（本环境：https://appstore.timefly.art）作为内测分发与检查更新平台时，使用本仓库 `update-zealot` + `uploadToZealot.gradle`。
+将 [Zealot](https://github.com/tryzealot/zealot)（本环境：https://appstore.timefly.art）作为内测分发与检查更新平台时，使用本仓库 `update-zealot` + `uploadToZealot.gradle`（单 app）或 `uploadToZealotModule.gradle`（多 app）。
 
-> 与蒲公英 / 七牛方案二选一即可，**不要**在同一工程同时 `apply` `uploadToZealot.gradle` 与 `uploadToPyger.gradle` / `uploadToQiniu.gradle`。
+> 与蒲公英 / 七牛方案二选一即可，**不要**在同一工程同时 `apply` Zealot 脚本与 `uploadToPyger.gradle` / `uploadToQiniu.gradle`；也**不要**同时 apply 两个 Zealot 脚本。
 
 ## 一键集成
+
+按工程里 **application module 数量** 二选一（**不要**同时 apply 两个脚本，也勿与蒲公英 / 七牛脚本混用）。
+
+### A. 单 application module（根工程 apply）
 
 根工程 `build.gradle`：
 
@@ -16,8 +20,7 @@ buildscript {
 }
 ```
 
-上传实现与蒲公英脚本相同：`HttpURLConnection` multipart；changelog 等文本字段用 **UTF-8** 写入（不用 `DataOutputStream.writeBytes`，避免中文损坏）。
-在 `local.properties`（勿提交 git）：
+`local.properties`（勿提交 git）：
 
 ```properties
 zealot_endpoint=https://appstore.timefly.art
@@ -29,11 +32,44 @@ zealot_token=用户页底部 API Key
 # zealot_use_local=true
 ```
 
-| 配置项 | 是否进 APK | 说明 |
-|--------|------------|------|
-| `zealot_endpoint` | 是（BuildConfig） | 默认 `https://appstore.timefly.art` |
-| `zealot_channel_key` | 是（BuildConfig） | **渠道 Key**，不是安装页 slug（如 `JLM4A`） |
-| `zealot_token` | **否** | 仅 Gradle 上传任务读取 |
+### B. 多 application module（各 module 内 apply）
+
+每个应用 module 的 `build.gradle`：
+
+```groovy
+apply plugin: 'com.android.application'
+
+ext.zealot_channel_key = '该应用自己的渠道 Key'  // 必填；不是 slug
+// ext.zealot_endpoint = 'https://appstore.timefly.art'  // 可选，覆盖 local.properties
+// ext.zealot_lib_version = '5.0.0'
+
+apply from: 'https://raw.githubusercontent.com/skyNet2017/AppUpdate/master/uploadToZealotModule.gradle'
+// 本仓库本地调试也可：
+// apply from: rootProject.file('uploadToZealotModule.gradle')
+```
+
+`local.properties` 只放共享上传凭证（**不要**再写全局 `zealot_channel_key`）：
+
+```properties
+zealot_endpoint=https://appstore.timefly.art
+zealot_token=用户页底部 API Key
+# zealot_lib_version=5.0.0
+# zealot_use_local=true
+```
+
+根工程 **不要** `apply` `uploadToZealot.gradle`，否则会重复加依赖 / 重复建任务。
+
+本仓库 `sample` 已按方案 B 接入：`apply from: rootProject.file('uploadToZealotModule.gradle')`，并将 `local.properties` 中的 `zealot_channel_key` 写入 `ext`（演示用，避免把 key 提交进仓库；真实多 app 工程请在各 module 直接写死各自的 key）。
+
+### 配置项说明
+
+上传实现与蒲公英脚本相同：`HttpURLConnection` multipart；changelog 等文本字段用 **UTF-8** 写入（不用 `DataOutputStream.writeBytes`，避免中文损坏）。
+
+| 配置项 | 是否进 APK | 单 module（A） | 多 module（B） |
+|--------|------------|----------------|----------------|
+| `zealot_endpoint` | 是（BuildConfig） | `local.properties` | `local.properties` 或 module `ext` |
+| `zealot_channel_key` | 是（BuildConfig） | `local.properties` | **各 module `ext.zealot_channel_key`** |
+| `zealot_token` | **否** | `local.properties` | `local.properties`（共享） |
 
 配置后：
 
@@ -100,5 +136,6 @@ api 'com.github.skyNet2017.AppUpdate:update-zealot:5.0.0'
 ## 发版给其他 App 用
 
 1. 合并本仓库改动后打 git tag（如 `5.0.0`）并 push  
-2. 外部工程 apply 远程 `uploadToZealot.gradle`，配置 `local.properties`  
-3. 若 jitpack 尚未构建成功，可临时 `zealot_lib_version` 指向已有 tag，或先用本仓库 `composite` / `mavenLocal`
+2. 外部工程：单 app 用远程 `uploadToZealot.gradle`；多 app 用远程 `uploadToZealotModule.gradle` + 各 module `ext.zealot_channel_key`  
+3. 配置 `local.properties` 中的 `zealot_token`（及可选 `zealot_endpoint`）  
+4. 若 jitpack 尚未构建成功，可临时 `zealot_lib_version` 指向已有 tag，或先用本仓库 `composite` / `mavenLocal`

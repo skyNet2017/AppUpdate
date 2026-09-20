@@ -1,6 +1,9 @@
 apply plugin: 'com.android.application'
 
-def zealotProp = { String key, String defVal ->
+// 多 application module 示例：在本 module 配置 channel_key 后 apply。
+// 真实多 app 工程可直接：ext.zealot_channel_key = '各应用自己的渠道 Key'
+// 本 sample 从 local.properties 读入，避免把 key 提交进仓库。
+def zealotFromLocal = { String key ->
     try {
         def f = rootProject.file('local.properties')
         if (f.exists()) {
@@ -11,8 +14,11 @@ def zealotProp = { String key, String defVal ->
         }
     } catch (Throwable ignored) {
     }
-    return defVal
+    return null
 }
+ext.zealot_channel_key = zealotFromLocal('zealot_channel_key') ?: ''
+// ext.zealot_endpoint = 'https://appstore.timefly.art'
+apply from: rootProject.file('uploadToZealotModule.gradle')
 
 android {
     compileSdkVersion 32
@@ -25,8 +31,6 @@ android {
         versionName "0.0.1"
         multiDexEnabled true
         testInstrumentationRunner 'androidx.test.runner.AndroidJUnitRunner'
-        buildConfigField 'String', 'zealot_endpoint', '"' + zealotProp('zealot_endpoint', 'https://appstore.timefly.art') + '"'
-        buildConfigField 'String', 'zealot_channel_key', '"' + zealotProp('zealot_channel_key', '') + '"'
         ndk {
             abiFilters 'arm64-v8a', 'x86_64'
         }
@@ -58,7 +62,7 @@ dependencies {
 
     implementation project(path: ':update-default')
     // implementation project(path: ':update-pyger')  // 与 zealot 二选一，勿同时 Startup
-    implementation project(path: ':update-zealot')
+    // update-zealot 由 uploadToZealotModule.gradle 自动添加
 
 
     implementation 'androidx.multidex:multidex:2.0.0'

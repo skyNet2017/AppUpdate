@@ -11,7 +11,8 @@ buildscript {
     // 蒲公英 / 七牛 / Zealot 脚本三选一，勿同时 apply
     // apply from:'uploadToPyger.gradle'
     // apply from:'uploadToQiniu.gradle'
-    apply from:'uploadToZealot.gradle'   // 自建 Zealot：见 docs/zealot.md
+    // 单 app：apply from:'uploadToZealot.gradle'
+    // 多 app：在各 application module 内 apply uploadToZealotModule.gradle（见 sample）
     ext{
         //groupId='com.github.skyNet2017.AppUpdate'
         versionCode = '2.0.00'

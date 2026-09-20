@@ -1,73 +1,22 @@
 import groovy.json.JsonSlurper
 
-// 基于自建 Zealot（https://appstore.timefly.art）：
-// 在 local.properties 配置：
-//   zealot_channel_key=渠道 Key（不是 slug，如不是 JLM4A）
+// 多 application module 场景：在各自 module 的 build.gradle 中 apply（勿与根工程 uploadToZealot.gradle 同时用）。
+//
+// module/build.gradle 示例：
+//   apply plugin: 'com.android.application'
+//   ext.zealot_channel_key = '该应用渠道 Key'   // 必填；不是 slug
+//   // ext.zealot_endpoint = 'https://appstore.timefly.art'  // 可选，覆盖 local.properties
+//   // ext.zealot_lib_version = '5.0.0'
+//   apply from: 'https://raw.githubusercontent.com/skyNet2017/AppUpdate/master/uploadToZealotModule.gradle'
+//
+// local.properties（根工程，勿提交 git）：
 //   zealot_token=用户 API Key（仅上传用，不进 APK）
 //   zealot_endpoint=https://appstore.timefly.art   （可选）
-//   zealot_lib_version=5.0.0                       （可选，jitpack 版本）
-//   zealot_use_local=true                          （本仓库调试用，依赖 :update-zealot）
+//   zealot_lib_version=5.0.0                       （可选）
+//   zealot_use_local=true                          （本仓库调试用）
 //
-// 根 build.gradle（仅适合工程里只有一个 application module）：
-//   buildscript {
-//     apply from: 'uploadToZealot.gradle'
-//   }
-//
-// 多个 application module 时请改用 uploadToZealotModule.gradle，
-// 在各 module/build.gradle 里 apply，并用 ext.zealot_channel_key 区分渠道。
-//
-// 勿与 uploadToZealotModule / uploadToPyger / uploadToQiniu 同时 apply。
-// 上传使用 HttpURLConnection multipart；文本字段用 UTF-8，避免中文 changelog 损坏。
-// 找包：android/.../build/outputs/apk 与 Flutter {root}/build/app/outputs（如 mobile/build/app/outputs）。
-// upload/pack 任务：clean → assemble →（upload）上传。
-
-def propOrLocal(String key) {
-    try {
-        def v = rootProject.hasProperty(key) ? rootProject.property(key) : null
-        if (v != null && v.toString().trim()) {
-            return v.toString().trim()
-        }
-    } catch (Throwable ignored) {
-    }
-    return getFromLocalProperties(key)
-}
-
-def zealotEndpoint() {
-    def v = propOrLocal("zealot_endpoint")
-    if (v == null || v.isEmpty()) {
-        return "https://appstore.timefly.art"
-    }
-    while (v.endsWith("/")) {
-        v = v.substring(0, v.length() - 1)
-    }
-    return v
-}
-
-def zealotChannelKey() {
-    return propOrLocal("zealot_channel_key")
-}
-
-def zealotToken() {
-    return propOrLocal("zealot_token")
-}
-
-def zealotLibVersion() {
-    def v = propOrLocal("zealot_lib_version")
-    return (v == null || v.isEmpty()) ? "5.0.0" : v
-}
-
-def zealotUseLocal() {
-    def v = propOrLocal("zealot_use_local")
-    if (v != null) {
-        return "true".equalsIgnoreCase(v) || "1".equals(v)
-    }
-    // 本仓库根工程包含 :update-zealot 时默认走本地模块，便于未发 jitpack tag 前自测
-    try {
-        return rootProject.findProject(":update-zealot") != null
-    } catch (Throwable ignored) {
-        return false
-    }
-}
+// 上传：HttpURLConnection multipart；文本 UTF-8。
+// 任务：uploadApk / pack（clean → assemble → 可选上传）。
 
 def getFromLocalProperties(String key) {
     try {
@@ -84,45 +33,133 @@ def getFromLocalProperties(String key) {
     return null
 }
 
-gradle.addProjectEvaluationListener(new ProjectEvaluationListener() {
-    void beforeEvaluate(Project project) {
-    }
-
-    @Override
-    void afterEvaluate(Project project, ProjectState state) {
-        if (project.plugins.findPlugin('com.android.application') == null) {
-            return
-        }
-        project.repositories {
-            maven { url 'https://jitpack.io' }
-            maven { url 'https://nexus.hss01248.tech/repository/maven-releases/' }
-        }
-
-        boolean useLocal = zealotUseLocal()
-        if (useLocal && rootProject.findProject(":update-zealot") != null) {
-            def localZealot = rootProject.project(":update-zealot")
-            println("[uploadToZealot] ${project.name} -> project(':update-zealot')")
-            project.dependencies.add("implementation", localZealot)
-        } else {
-            def ver = zealotLibVersion()
-            println("[uploadToZealot] ${project.name} -> com.github.skyNet2017.AppUpdate:update-zealot:${ver}")
-            project.dependencies.add("implementation", "com.github.skyNet2017.AppUpdate:update-zealot:${ver}")
-        }
-
-        def endpoint = zealotEndpoint()
-        def channelKey = zealotChannelKey() ?: ""
-        project.android {
-            buildTypes.each {
-                it.buildConfigField 'String', 'zealot_endpoint', '"' + endpoint + '"'
-                it.buildConfigField 'String', 'zealot_channel_key', '"' + channelKey + '"'
+/** 优先 module ext / -P，再 rootProject 属性，再 local.properties */
+def propModuleOrLocal(String key) {
+    try {
+        if (project.ext.has(key)) {
+            def v = project.ext.get(key)
+            if (v != null && v.toString().trim()) {
+                return v.toString().trim()
             }
         }
+    } catch (Throwable ignored) {
     }
-})
+    try {
+        def v = project.findProperty(key)
+        if (v != null && v.toString().trim()) {
+            return v.toString().trim()
+        }
+    } catch (Throwable ignored) {
+    }
+    try {
+        def v = rootProject.hasProperty(key) ? rootProject.property(key) : null
+        if (v != null && v.toString().trim()) {
+            return v.toString().trim()
+        }
+    } catch (Throwable ignored) {
+    }
+    return getFromLocalProperties(key)
+}
+
+def zealotEndpoint() {
+    def v = propModuleOrLocal("zealot_endpoint")
+    if (v == null || v.isEmpty()) {
+        return "https://appstore.timefly.art"
+    }
+    while (v.endsWith("/")) {
+        v = v.substring(0, v.length() - 1)
+    }
+    return v
+}
+
+/** 仅从当前 module 的 ext / 属性读取，不用 local.properties（避免多 app 串 key） */
+def zealotChannelKey() {
+    try {
+        if (project.ext.has("zealot_channel_key")) {
+            def v = project.ext.get("zealot_channel_key")
+            if (v != null && v.toString().trim()) {
+                return v.toString().trim()
+            }
+        }
+    } catch (Throwable ignored) {
+    }
+    try {
+        def v = project.findProperty("zealot_channel_key")
+        if (v != null && v.toString().trim()) {
+            return v.toString().trim()
+        }
+    } catch (Throwable ignored) {
+    }
+    return null
+}
+
+def zealotToken() {
+    try {
+        def v = rootProject.hasProperty("zealot_token") ? rootProject.property("zealot_token") : null
+        if (v != null && v.toString().trim()) {
+            return v.toString().trim()
+        }
+    } catch (Throwable ignored) {
+    }
+    return getFromLocalProperties("zealot_token")
+}
+
+def zealotLibVersion() {
+    def v = propModuleOrLocal("zealot_lib_version")
+    return (v == null || v.isEmpty()) ? "5.0.0" : v
+}
+
+def zealotUseLocal() {
+    def v = propModuleOrLocal("zealot_use_local")
+    if (v != null) {
+        return "true".equalsIgnoreCase(v) || "1".equals(v)
+    }
+    try {
+        return rootProject.findProject(":update-zealot") != null
+    } catch (Throwable ignored) {
+        return false
+    }
+}
+
+def configureZealotForThisModule() {
+    if (project.plugins.findPlugin('com.android.application') == null) {
+        throw new RuntimeException("[uploadToZealotModule] ${project.name} 不是 com.android.application，请只在 application module 中 apply")
+    }
+
+    project.repositories {
+        maven { url 'https://jitpack.io' }
+        maven { url 'https://nexus.hss01248.tech/repository/maven-releases/' }
+    }
+
+    boolean useLocal = zealotUseLocal()
+    if (useLocal && rootProject.findProject(":update-zealot") != null) {
+        def localZealot = rootProject.project(":update-zealot")
+        println("[uploadToZealotModule] ${project.name} -> project(':update-zealot')")
+        project.dependencies.add("implementation", localZealot)
+    } else {
+        def ver = zealotLibVersion()
+        println("[uploadToZealotModule] ${project.name} -> com.github.skyNet2017.AppUpdate:update-zealot:${ver}")
+        project.dependencies.add("implementation", "com.github.skyNet2017.AppUpdate:update-zealot:${ver}")
+    }
+
+    def endpoint = zealotEndpoint()
+    def channelKey = zealotChannelKey() ?: ""
+    if (channelKey.isEmpty()) {
+        println("[uploadToZealotModule] 警告: ${project.name} 未设置 ext.zealot_channel_key，BuildConfig 与上传都会失败")
+    }
+    project.android {
+        buildTypes.each {
+            it.buildConfigField 'String', 'zealot_endpoint', '"' + endpoint + '"'
+            it.buildConfigField 'String', 'zealot_channel_key', '"' + channelKey + '"'
+        }
+    }
+
+    addUploadTasks(project)
+    addPackTasks(project)
+}
 
 /**
  * 上传 APK 到 Zealot POST /api/apps/upload
- * 与 uploadToPyger 相同用 HttpURLConnection；文本用 UTF-8 字节写入（勿用 writeBytes）。
  */
 def uploadApk(boolean isRelease, Project porject) {
     def apk = findApk(porject, isRelease)
@@ -137,7 +174,7 @@ def uploadApk(boolean isRelease, Project porject) {
         throw new RuntimeException("Zealot token 未配置。请在 local.properties 设置 zealot_token（用户页 API Key）")
     }
     if (channelKey == null || channelKey.isEmpty()) {
-        throw new RuntimeException("Zealot channel_key 未配置。请在 local.properties 设置 zealot_channel_key（渠道 Key，不是 slug）")
+        throw new RuntimeException("Zealot channel_key 未配置。请在 ${porject.name}/build.gradle 设置 ext.zealot_channel_key")
     }
 
     def uploadUrl = endpoint + "/api/apps/upload?token=" + URLEncoder.encode(token, "UTF-8")
@@ -149,7 +186,7 @@ def uploadApk(boolean isRelease, Project porject) {
         changelog = changelog.substring(0, 500)
     }
 
-    println "*************** start upload to Zealot ***************"
+    println "*************** start upload to Zealot (${porject.name}) ***************"
     println "url: ${endpoint}/api/apps/upload?token=***"
     println "channel_key: ${channelKey.take(8)}..."
     println "file: ${apk.absolutePath}"
@@ -240,12 +277,6 @@ def uploadApk(boolean isRelease, Project porject) {
     }
 }
 
-/**
- * 收集 APK 扫描目录：
- * 1) 原生 AGP：android/app/build/outputs/apk
- * 2) Flutter：{flutterRoot}/build/app/outputs（含 flutter-apk、apk）
- *    常见布局 mobile/android/app → Flutter 根为 mobile/
- */
 def apkSearchDirs(Project project, boolean isRelease) {
     def flavor = isRelease ? "release" : "debug"
     def dirs = [] as LinkedHashSet
@@ -256,13 +287,11 @@ def apkSearchDirs(Project project, boolean isRelease) {
 
     def flutterRoots = [] as LinkedHashSet
     try {
-        // android/ → 上一级为 Flutter 工程根（如 mobile/）
         if (project.rootProject?.projectDir != null) {
             flutterRoots << project.rootProject.projectDir.parentFile
         }
     } catch (Throwable ignored) {
     }
-    // android/app → ../../ 亦为 Flutter 根
     try {
         if (appDir?.parentFile?.parentFile != null) {
             flutterRoots << appDir.parentFile.parentFile
@@ -324,7 +353,6 @@ def findApk(Project porject, boolean isRelease) {
         return newest
     }
 
-    // 优先 AGP 产物，再 Flutter build/app/outputs，最后其它
     File newest = pickNewest(agpMatched)
     if (newest == null) {
         newest = pickNewest(flutterMatched)
@@ -339,7 +367,6 @@ def findApk(Project porject, boolean isRelease) {
     return newest
 }
 
-/** 若 APK 不在 app/build/outputs/apk 下，复制到该目录再上传（仍返回原文件用于上传）。 */
 def ensureCopiedToAgpOutputs(Project project, boolean isRelease, File apk) {
     try {
         def flavor = isRelease ? "release" : "debug"
@@ -372,17 +399,7 @@ static def getGitVersionInfo() {
     return log
 }
 
-rootProject.subprojects.each { project ->
-    project.afterEvaluate {
-        addUploadTasks(project)
-        addPackTasks(project)
-    }
-}
-
 def addUploadTasks(Project project) {
-    if (project.plugins.findPlugin('com.android.application') == null) {
-        return
-    }
     println("应用 Zealot upload apk 相关任务到--->" + project.name)
 
     project.android.applicationVariants.all { variant ->
@@ -390,7 +407,6 @@ def addUploadTasks(Project project) {
         project.tasks.create(name: "uploadApkOf${project.name.capitalize()}${variant.name.capitalize()}"
                 , description: "上传 apk 到 Zealot-${project.name.capitalize()}${variant.name.capitalize()}"
                 , group: "uploadApk") {
-            // 打包前先 clean，再 assemble（mustRunAfter 保证顺序）
             dependsOn("clean", assembleName)
             doLast {
                 uploadApk("Release".equals(variant.name.capitalize()) || variant.name.toLowerCase().endsWith("release"), project)
@@ -404,9 +420,6 @@ def addUploadTasks(Project project) {
 }
 
 def addPackTasks(Project project) {
-    if (project.plugins.findPlugin('com.android.application') == null) {
-        return
-    }
     project.android.applicationVariants.all { variant ->
         def assembleName = "assemble${variant.name.capitalize()}"
         project.tasks.create(name: "pack${variant.name.capitalize()}"
@@ -418,5 +431,14 @@ def addPackTasks(Project project) {
         if (assembleTask != null) {
             assembleTask.mustRunAfter("clean")
         }
+    }
+}
+
+// 本脚本在 module 内 apply：只配置当前 project
+if (project.state.executed) {
+    configureZealotForThisModule()
+} else {
+    project.afterEvaluate {
+        configureZealotForThisModule()
     }
 }
