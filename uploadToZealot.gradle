@@ -5,7 +5,7 @@ import groovy.json.JsonSlurper
 //   zealot_channel_key=渠道 Key（不是 slug，如不是 JLM4A）
 //   zealot_token=用户 API Key（仅上传用，不进 APK）
 //   zealot_endpoint=https://appstore.timefly.art   （可选）
-//   zealot_lib_version=5.0.0                       （可选，jitpack 版本）
+//   zealot_lib_version=5.0.1                       （可选，jitpack 版本）
 //   zealot_use_local=true                          （本仓库调试用，依赖 :update-zealot）
 //
 // 根 build.gradle（仅适合工程里只有一个 application module）：
@@ -53,7 +53,7 @@ def zealotToken() {
 
 def zealotLibVersion() {
     def v = propOrLocal("zealot_lib_version")
-    return (v == null || v.isEmpty()) ? "5.0.0" : v
+    return (v == null || v.isEmpty()) ? "5.0.1" : v
 }
 
 def zealotUseLocal() {
